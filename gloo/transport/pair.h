@@ -64,6 +64,7 @@ class Pair {
   int getLocalRank() const {
     return localRank_;
   }
+  bool c2c_ = false;
 
  protected:
   // Rank of the process on the local machine

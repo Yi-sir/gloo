@@ -6,7 +6,7 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-#include "gloo/transport/tcp/pair.h"
+#include "gloo/transport/sophgo/pair.h"
 
 #include <algorithm>
 #include <array>
@@ -27,15 +27,15 @@
 
 #include "gloo/common/error.h"
 #include "gloo/common/logging.h"
-#include "gloo/transport/tcp/buffer.h"
-#include "gloo/transport/tcp/context.h"
-#include "gloo/transport/tcp/unbound_buffer.h"
+#include "gloo/transport/sophgo/buffer.h"
+#include "gloo/transport/sophgo/context.h"
+#include "gloo/transport/sophgo/unbound_buffer.h"
 
 #define FD_INVALID (-1)
 
 namespace gloo {
 namespace transport {
-namespace tcp {
+namespace sophgo {
 
 namespace {
 
@@ -896,7 +896,7 @@ void Pair::send(
     uint64_t slot,
     size_t offset,
     size_t nbytes) {
-  auto buf = static_cast<tcp::UnboundBuffer*>(tbuf)->getWeakNonOwningPtr();
+  auto buf = static_cast<sophgo::UnboundBuffer*>(tbuf)->getWeakNonOwningPtr();
 
   if (nbytes > 0) {
     GLOO_ENFORCE_LE(offset, tbuf->size);
@@ -929,7 +929,7 @@ void Pair::recv(
     uint64_t slot,
     size_t offset,
     size_t nbytes) {
-  auto buf = static_cast<tcp::UnboundBuffer*>(tbuf)->getWeakNonOwningPtr();
+  auto buf = static_cast<sophgo::UnboundBuffer*>(tbuf)->getWeakNonOwningPtr();
 
   if (nbytes > 0) {
     GLOO_ENFORCE_LE(offset, tbuf->size);
@@ -958,7 +958,7 @@ bool Pair::tryRecv(
     uint64_t slot,
     size_t offset,
     size_t nbytes) {
-  auto buf = static_cast<tcp::UnboundBuffer*>(tbuf)->getWeakNonOwningPtr();
+  auto buf = static_cast<sophgo::UnboundBuffer*>(tbuf)->getWeakNonOwningPtr();
 
   if (nbytes > 0) {
     GLOO_ENFORCE_LE(offset, tbuf->size);
@@ -1094,6 +1094,6 @@ void Pair::signalAndThrowException(std::exception_ptr ex) {
   std::rethrow_exception(ex);
 }
 
-} // namespace tcp
+} // namespace sophgo
 } // namespace transport
 } // namespace gloo

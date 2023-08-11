@@ -51,6 +51,8 @@ class Context {
 
   virtual void createAndConnectAllPairs(IStore& store);
 
+  virtual void setDevId(int dev_id);
+
   // Creates unbound buffer to be used with the ranks in this context.
   // It is not bound to a specific rank, but still bound to this
   // context. This is needed to support recv-from-any semantics, where
@@ -67,6 +69,8 @@ class Context {
   std::chrono::milliseconds getTimeout() const {
     return timeout_;
   }
+
+  int dev_id = -1;
 
  protected:
   // Protects access to the pending operations and expected

@@ -28,6 +28,7 @@ set(USE_RCCL_DEFAULT OFF)
 set(USE_LIBUV_DEFAULT OFF)
 set(USE_TCP_OPENSSL_LINK_DEFAULT OFF)
 set(USE_TCP_OPENSSL_LOAD_DEFAULT OFF)
+set(USE_SOPHGO_DEFAULT OFF)
 
 # Options
 option(USE_REDIS "Support using Redis for rendezvous" ${USE_REDIS_DEFAULT})
@@ -42,6 +43,7 @@ if(${USE_TCP_OPENSSL_LINK} AND ${USE_TCP_OPENSSL_LOAD})
 endif()
 option(USE_CUDA "Build with CUDA support" OFF)
 option(GLOO_USE_CUDA_TOOLKIT "Build CUDA with FindCUDATookit.cmake and enable_language(CUDA)" OFF)
+option(USE_SOPHGO "Support SOPHGO Hardware" ${USE_SOPHGO_DEFAULT})
 
 if(MSVC)
   message(STATUS "MSVC detected")

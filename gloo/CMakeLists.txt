@@ -101,6 +101,12 @@ else()
   set(GLOO_HAVE_TRANSPORT_UV 0)
 endif()
 
+if(USE_SOPHGO)
+  set(GLOO_HAVE_TRANSPORT_SOPHGO 1)
+else()
+  set(GLOO_HAVE_TRANSPORT_SOPHGO 0)
+endif()
+
 add_subdirectory(common)
 add_subdirectory(mpi)
 if(USE_CUDA AND USE_NCCL)
@@ -111,6 +117,8 @@ if(USE_ROCM AND USE_RCCL)
 endif()
 add_subdirectory(rendezvous)
 add_subdirectory(transport)
+add_subdirectory(sophgo)
+# transport里拿到GLOO_SRCS和GLOO_HDRS列表
 
 # Depend on pthreads for transport device threads
 if(NOT MSVC)
@@ -136,9 +144,21 @@ set(GLOO_USE_IBVERBS ${USE_IBVERBS})
 set(GLOO_USE_MPI ${USE_MPI})
 set(GLOO_USE_AVX ${USE_AVX})
 set(GLOO_USE_LIBUV ${USE_LIBUV})
+set(GLOO_USE_SOPHGO ${USE_SOPHGO})
 configure_file(config.h.in config.h)
 
 add_library(gloo ${GLOO_STATIC_OR_SHARED} ${GLOO_SRCS})
+
+# use bmlib
+if(USE_SOPHGO)
+  find_package(libsophon REQUIRED)
+  include_directories(${LIBSOPHON_INCLUDE_DIRS})
+  link_directories(${LIBSOPHON_LIB_DIRS})
+  set(BM_LIBS bmlib bmrt)
+  list(APPEND gloo_DEPENDENCY_LIBS ${BM_LIBS})
+  # target_link_libraries(gloo ${BM_LIBS})
+endif()
+
 if(USE_CUDA)
   if(GLOO_USE_CUDA_TOOLKIT)
     enable_language(CUDA)
@@ -155,6 +175,7 @@ endif()
 if(USE_LIBUV)
   target_link_libraries(gloo PRIVATE uv_a)
 endif()
+
 if(USE_TCP_OPENSSL_LINK)
   target_compile_definitions(gloo PRIVATE USE_TCP_OPENSSL_LINK)
   target_link_libraries(gloo PRIVATE OpenSSL::SSL OpenSSL::Crypto)

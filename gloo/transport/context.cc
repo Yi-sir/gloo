@@ -6,8 +6,9 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-#include "gloo/common/utils.h"
 #include "gloo/transport/context.h"
+
+#include "gloo/common/utils.h"
 
 namespace gloo {
 namespace transport {
@@ -22,6 +23,8 @@ Context::~Context() {}
 std::unique_ptr<transport::Pair>& Context::getPair(int rank) {
   return pairs_.at(rank);
 }
+
+void Context::setDevId(int dev_id) { this->dev_id = dev_id; }
 
 void Context::createAndConnectAllPairs(IStore& store) {
   // this is the default un-optimized version of the rendezvous protocol
@@ -88,8 +91,8 @@ void Context::createAndConnectAllPairs(IStore& store) {
   }
 }
 
-std::vector<char> Context::extractAddress(
-    const std::vector<char>& allAddrs, int i) const {
+std::vector<char> Context::extractAddress(const std::vector<char>& allAddrs,
+                                          int i) const {
   // Extract address from the list of all addresses
   int adjRank = (rank > i ? rank - 1 : rank);
   // Adjust for the fact that nodes do not store address for themselves
@@ -127,10 +130,9 @@ void Context::LazyTally::initialize_iterator() {
     return;
   }
 
-  it_ =
-      std::find_if(vec_.begin(), vec_.end(), [this](const Context::Tally& op) {
-        return op.slot == slot_;
-      });
+  it_ = std::find_if(
+      vec_.begin(), vec_.end(),
+      [this](const Context::Tally& op) { return op.slot == slot_; });
   initialized_ = true;
 }
 
@@ -177,11 +179,9 @@ bool Context::Mutator::shiftExpectedSendNotification() {
 
 std::vector<Context::Tally>::iterator Context::findPendingOperations(
     slot_t slot) {
-  return std::find_if(
-      pendingOperations_.begin(),
-      pendingOperations_.end(),
-      [slot](const Tally& op) { return op.slot == slot; });
+  return std::find_if(pendingOperations_.begin(), pendingOperations_.end(),
+                      [slot](const Tally& op) { return op.slot == slot; });
 }
 
-} // namespace transport
-} // namespace gloo
+}  // namespace transport
+}  // namespace gloo

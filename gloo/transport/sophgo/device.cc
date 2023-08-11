@@ -6,31 +6,32 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-#include "gloo/transport/tcp/device.h"
+#include "gloo/transport/sophgo/device.h"
 
-#include <array>
 #include <ifaddrs.h>
 #include <netdb.h>
 #include <netinet/in.h>
 #include <string.h>
 
+#include <array>
 
+#include "gloo/common/error.h"
 #include "gloo/common/linux.h"
 #include "gloo/common/logging.h"
-#include "gloo/common/error.h"
-#include "gloo/transport/tcp/context.h"
-#include "gloo/transport/tcp/helpers.h"
-#include "gloo/transport/tcp/pair.h"
+#include "gloo/transport/sophgo/context.h"
+#include "gloo/transport/sophgo/helpers.h"
+#include "gloo/transport/sophgo/pair.h"
 
 namespace gloo {
 namespace transport {
-namespace tcp {
+namespace sophgo {
 
 static void lookupAddrForIface(struct attr& attr) {
   struct ifaddrs* ifap;
-  auto rv = getifaddrs(&ifap); // 获取网络接口地址信息，包括接口名称，IP地址，网络掩码，广播地址等
+  auto rv = getifaddrs(
+      &ifap);  // 获取网络接口地址信息，包括接口名称，IP地址，网络掩码，广播地址等
   GLOO_ENFORCE_NE(rv, -1, strerror(errno));
-  struct ifaddrs *ifa;
+  struct ifaddrs* ifa;
   for (ifa = ifap; ifa != nullptr; ifa = ifa->ifa_next) {
     // Skip entry if ifa_addr is NULL (see getifaddrs(3))
     if (ifa->ifa_addr == nullptr) {
@@ -57,9 +58,10 @@ static void lookupAddrForIface(struct attr& attr) {
         memcpy(&attr.ai_addr, ifa->ifa_addr, attr.ai_addrlen);
         break;
       case AF_UNSPEC:
-      // this way for examples
-      // ifa->ifa_addr: 网络接口地址信息，sockaddr类指针
-      // ifa->ifa_addr->sa_family: 地址类型，例如IPv4(AF_INET) IPv6(AF_INET6) 本地进程间通信(AF_UNIX) 链路层地址(AF_LINK)
+        // this way for examples
+        // ifa->ifa_addr: 网络接口地址信息，sockaddr类指针
+        // ifa->ifa_addr->sa_family: 地址类型，例如IPv4(AF_INET) IPv6(AF_INET6)
+        // 本地进程间通信(AF_UNIX) 链路层地址(AF_LINK)
         switch (ifa->ifa_addr->sa_family) {
           case AF_INET:
             attr.ai_family = AF_INET;
@@ -83,10 +85,7 @@ static void lookupAddrForIface(struct attr& attr) {
     attr.ai_protocol = 0;
     break;
   }
-  GLOO_ENFORCE(
-    ifa != nullptr,
-    "Unable to find address for: ",
-    attr.iface);
+  GLOO_ENFORCE(ifa != nullptr, "Unable to find address for: ", attr.iface);
   freeifaddrs(ifap);
   return;
 }
@@ -127,20 +126,12 @@ static void lookupAddrForHostname(struct attr& attr) {
   }
 
   // If the final call to bind(2) failed, raise error saying so.
-  GLOO_ENFORCE(
-    bind_rv == 0,
-    "Unable to find address for ",
-    attr.hostname,
-    "; bind(2) for ",
-    bind_addr,
-    " failed with: ",
-    strerror(bind_errno));
+  GLOO_ENFORCE(bind_rv == 0, "Unable to find address for ", attr.hostname,
+               "; bind(2) for ", bind_addr,
+               " failed with: ", strerror(bind_errno));
 
   // Verify that we were able to find an address in the first place.
-  GLOO_ENFORCE(
-    rp != nullptr,
-    "Unable to find address for: ",
-    attr.hostname);
+  GLOO_ENFORCE(rp != nullptr, "Unable to find address for: ", attr.hostname);
   freeaddrinfo(result);
   return;
 }
@@ -187,7 +178,7 @@ const std::string sockaddrToInterfaceName(const struct attr& attr) {
   auto rv = getifaddrs(&ifap);
   GLOO_ENFORCE_NE(rv, -1, strerror(errno));
   auto addrIsLocalhost = isLocalhostAddr((struct sockaddr*)&attr.ai_addr);
-  struct ifaddrs *ifa;
+  struct ifaddrs* ifa;
   for (ifa = ifap; ifa != nullptr; ifa = ifa->ifa_next) {
     // Skip entry if ifa_addr is NULL (see getifaddrs(3))
     if (ifa->ifa_addr == nullptr) {
@@ -211,10 +202,8 @@ const std::string sockaddrToInterfaceName(const struct attr& attr) {
       }
     }
   }
-  GLOO_ENFORCE(
-    ifa != nullptr,
-    "Unable to find interface for: ",
-    Address(attr.ai_addr).str());
+  GLOO_ENFORCE(ifa != nullptr,
+               "Unable to find interface for: ", Address(attr.ai_addr).str());
   freeifaddrs(ifap);
   return iface;
 }
@@ -225,11 +214,9 @@ Device::Device(const struct attr& attr)
       listener_(std::make_shared<Listener>(loop_, attr)),
       interfaceName_(sockaddrToInterfaceName(attr_)),
       interfaceSpeedMbps_(getInterfaceSpeedByName(interfaceName_)),
-      pciBusID_(interfaceToBusID(interfaceName_)) {
-}
+      pciBusID_(interfaceToBusID(interfaceName_)) {}
 
-Device::~Device() {
-}
+Device::~Device() {}
 
 std::string Device::str() const {
   std::stringstream ss;
@@ -241,18 +228,21 @@ std::string Device::str() const {
   return ss.str();
 }
 
-const std::string& Device::getPCIBusID() const {
-  return pciBusID_;
-}
+const std::string& Device::getPCIBusID() const { return pciBusID_; }
 
-int Device::getInterfaceSpeed() const {
-  return interfaceSpeedMbps_;
-}
+int Device::getInterfaceSpeed() const { return interfaceSpeedMbps_; }
 
-std::shared_ptr<transport::Context> Device::createContext(
-    int rank, int size) {
+// std::shared_ptr<transport::Context> Device::createContext(
+//     int rank, int size, int dev_id) {
+//   return std::shared_ptr<transport::Context>(
+//       new sophgo::Context(shared_from_this(), rank, size, dev_id));
+// }
+
+std::shared_ptr<transport::Context> Device::createContext(int rank, int size) {
+  // return std::shared_ptr<transport::Context>(
+  //     new sophgo::Context(shared_from_this(), rank, size, -1));
   return std::shared_ptr<transport::Context>(
-      new tcp::Context(shared_from_this(), rank, size));
+      new sophgo::Context(shared_from_this(), rank, size));
 }
 
 void Device::registerDescriptor(int fd, int events, Handler* h) {
@@ -263,13 +253,9 @@ void Device::unregisterDescriptor(int fd, Handler* h) {
   loop_->unregisterDescriptor(fd, h);
 }
 
-Address Device::nextAddress() {
-  return listener_->nextAddress();
-}
+Address Device::nextAddress() { return listener_->nextAddress(); }
 
-bool Device::isInitiator(
-    const Address& local,
-    const Address& remote) const {
+bool Device::isInitiator(const Address& local, const Address& remote) const {
   int rv = 0;
   // The remote side of a pair will be called with the same
   // addresses, but in reverse. There should only be a single
@@ -307,11 +293,8 @@ bool Device::isInitiator(
   return rv > 0;
 }
 
-void Device::connect(
-    const Address& local,
-    const Address& remote,
-    std::chrono::milliseconds timeout,
-    connect_callback_t fn) {
+void Device::connect(const Address& local, const Address& remote,
+                     std::chrono::milliseconds timeout, connect_callback_t fn) {
   auto initiator = isInitiator(local, remote);
 
   if (initiator) {
@@ -329,10 +312,9 @@ void Device::connect(
 // associated with the address. If this connection already exists,
 // deal with it here.
 //
-void Device::connectAsListener(
-    const Address& local,
-    std::chrono::milliseconds /* unused */,
-    connect_callback_t fn) {
+void Device::connectAsListener(const Address& local,
+                               std::chrono::milliseconds /* unused */,
+                               connect_callback_t fn) {
   // TODO(pietern): Use timeout.
   listener_->waitForConnection(local.getSeq(), std::move(fn));
 }
@@ -344,10 +326,9 @@ void Device::connectAsListener(
 // connection has been written. If an error occurs at any time, the
 // callback is called with an associated error event.
 //
-void Device::connectAsInitiator(
-    const Address& remote,
-    std::chrono::milliseconds /* unused */,
-    connect_callback_t fn) {
+void Device::connectAsInitiator(const Address& remote,
+                                std::chrono::milliseconds /* unused */,
+                                connect_callback_t fn) {
   const auto& sockaddr = remote.getSockaddr();
 
   // Create new socket to connect to peer.
@@ -358,10 +339,10 @@ void Device::connectAsInitiator(
 
   // Write sequence number for peer to new socket.
   // TODO(pietern): Use timeout.
-  write<sequence_number_t>(
-      loop_, std::move(socket), remote.getSeq(), std::move(fn));
+  write<sequence_number_t>(loop_, std::move(socket), remote.getSeq(),
+                           std::move(fn));
 }
 
-} // namespace tcp
-} // namespace transport
-} // namespace gloo
+}  // namespace sophgo
+}  // namespace transport
+}  // namespace gloo

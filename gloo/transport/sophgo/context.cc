@@ -6,20 +6,28 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-#include "gloo/transport/tcp/context.h"
+#include "gloo/transport/sophgo/context.h"
 
 #include <cstring>
+#include <iostream>
 
 #include "gloo/common/error.h"
 #include "gloo/common/logging.h"
 #include "gloo/common/utils.h"
-#include "gloo/transport/tcp/device.h"
-#include "gloo/transport/tcp/pair.h"
-#include "gloo/transport/tcp/unbound_buffer.h"
+#include "gloo/transport/sophgo/device.h"
+#include "gloo/transport/sophgo/pair.h"
+#include "gloo/transport/sophgo/tell_chip.h"
+#include "gloo/transport/sophgo/unbound_buffer.h"
 
 namespace gloo {
 namespace transport {
-namespace tcp {
+namespace sophgo {
+
+// Context::Context(std::shared_ptr<Device> device, int rank, int size, int
+// dev_id)
+//     : ::gloo::transport::Context(rank, size),
+//       device_(std::move(device)),
+//       dev_id(dev_id) {}
 
 Context::Context(std::shared_ptr<Device> device, int rank, int size)
     : ::gloo::transport::Context(rank, size), device_(std::move(device)) {}
@@ -31,9 +39,9 @@ Context::~Context() {
   device_.reset();
 }
 
-void Context::createAndConnectAllPairs(IStore &store) {
-  // examples1中，store是PrefixStore，只初始化了prefix_ = test1，store_是fileStore
+// void Context::setDevId(int dev_id) { this->dev_id = dev_id; }
 
+void Context::createAndConnectAllPairs(IStore& store) {
   // Here instead of sending N addresses to store,
   // we send only 1 device address (since they are all the same)
   // and N sequence numbers to differentiate them.
@@ -46,16 +54,14 @@ void Context::createAndConnectAllPairs(IStore &store) {
   // to the seq num allocation logic and due to the layering in this lib
   // it's not super straightforward so left for folks having more bandwidth
   // later on.
-
   int localRank = 0;
   bool localRankSet = false;
-  auto localHostName = getHostname(); // qinhua
+  auto localHostName = getHostname();  // qinhua
 
   // We will create all the pairs including self
   // the self pair will not be connected
   // it's just to keep the later seq num matching logic simple
   std::vector<ssize_t> pairIdentifiers;
-  // size=2
   for (int i = 0; i < size; i++) {
     auto& pair = createPair(i);
     pairIdentifiers.emplace_back(
@@ -74,11 +80,12 @@ void Context::createAndConnectAllPairs(IStore &store) {
   // Pieter originally wrote (since the connect() is at `Device` level,
   // which does not have the rank info hosted at a higher `Pair` level).
   // So better safe than sorry for now we try to minimize the changeset needed.
+  // 先把自己的信息写进redis里
   const auto& currentRankPair = getPair(rank);
   auto deviceAddress = Address(
       static_cast<const Pair*>(currentRankPair.get())->address().getSockaddr());
-  Rank currentRankInfo(
-      localHostName, deviceAddress.bytes(), std::move(pairIdentifiers));
+  Rank currentRankInfo(localHostName, deviceAddress.bytes(),
+                       std::move(pairIdentifiers), dev_id);
   store.set(std::to_string(rank), currentRankInfo.bytes());
 
   // Connect every pair
@@ -112,6 +119,21 @@ void Context::createAndConnectAllPairs(IStore &store) {
     auto remoteAddr =
         Address(remoteDeviceAddr, remoteRankInfo.pairIdentifiers[rank]);
     pair->connect(remoteAddr.bytes());
+    if (localHostName == remoteRankInfo.hostname) {
+      // 同一个HostName，那么需要判断是否在同一张卡上，即是否可以做c2c
+      int remoteDevId = remoteRankInfo.dev_id;
+      if (is_on_same_card(dev_id, remoteDevId)) {
+        pair->c2c_ = true;
+      } else {
+        pair->c2c_ = false;
+      }
+      std::cout << "HostName: " << localHostName << ", dev id = " << dev_id
+                << " and " << remoteDevId
+                << ", is on the same card: " << pair->c2c_ << std::endl;
+    } else {
+      // 不在同一个机器上，不能做c2c
+      pair->c2c_ = false;
+    }
   }
 
   // 为与当前节点相关的通信对设置本地通信等级，用于标识节点在通信拓扑中的位置
@@ -126,23 +148,18 @@ void Context::createAndConnectAllPairs(IStore &store) {
 
 std::unique_ptr<transport::Pair>& Context::createPair(int rank) {
   pairs_[rank] = std::unique_ptr<transport::Pair>(
-      new tcp::Pair(this, device_.get(), rank, getTimeout()));
+      new sophgo::Pair(this, device_.get(), rank, getTimeout()));
   return pairs_[rank];
 }
 
 std::unique_ptr<transport::UnboundBuffer> Context::createUnboundBuffer(
-    void* ptr,
-    size_t size) {
-  auto buf = new tcp::UnboundBuffer(shared_from_this(), ptr, size);
+    void* ptr, size_t size) {
+  auto buf = new sophgo::UnboundBuffer(shared_from_this(), ptr, size);
   return std::unique_ptr<transport::UnboundBuffer>(buf);
 }
 
-void Context::recvFromAny(
-    UnboundBuffer* buf,
-    uint64_t slot,
-    size_t offset,
-    size_t nbytes,
-    std::vector<int> srcRanks) {
+void Context::recvFromAny(UnboundBuffer* buf, uint64_t slot, size_t offset,
+                          size_t nbytes, std::vector<int> srcRanks) {
   for (;;) {
     // Find rank of pair we can attempt a recv from
     auto rank = recvFromAnyFindRank(buf, slot, offset, nbytes, srcRanks);
@@ -160,12 +177,9 @@ void Context::recvFromAny(
   }
 }
 
-int Context::recvFromAnyFindRank(
-    UnboundBuffer* buf,
-    uint64_t slot,
-    size_t offset,
-    size_t nbytes,
-    const std::vector<int>& srcRanks) {
+int Context::recvFromAnyFindRank(UnboundBuffer* buf, uint64_t slot,
+                                 size_t offset, size_t nbytes,
+                                 const std::vector<int>& srcRanks) {
   std::unique_lock<std::mutex> lock(mutex_);
 
   // See if there is a remote pending send that can fulfill this recv.
@@ -192,21 +206,16 @@ int Context::recvFromAnyFindRank(
 
   // No candidates; register buffer for recv
   pendingRecv_[slot].emplace_back(
-      buf->getWeakNonOwningPtr(),
-      offset,
-      nbytes,
+      buf->getWeakNonOwningPtr(), offset, nbytes,
       std::unordered_set<int>(srcRanks.begin(), srcRanks.end()));
   return -1;
 }
 
 // Allowed to be called only by ContextMutator::findRecvFromAny,
 // where the context lock is already held.
-bool Context::findRecvFromAny(
-    uint64_t slot,
-    int rank,
-    WeakNonOwningPtr<UnboundBuffer>* buf,
-    size_t* offset,
-    size_t* nbytes) {
+bool Context::findRecvFromAny(uint64_t slot, int rank,
+                              WeakNonOwningPtr<UnboundBuffer>* buf,
+                              size_t* offset, size_t* nbytes) {
   // See if there is a pending recv for this slot.
   auto pit = pendingRecv_.find(slot);
   if (pit != pendingRecv_.end()) {
@@ -243,7 +252,7 @@ void Context::signalException(const std::string& msg) {
   // context's instance lock before looping over `pairs_`.
   for (auto& pair : pairs_) {
     if (pair) {
-      reinterpret_cast<tcp::Pair*>(pair.get())->signalExceptionExternal(msg);
+      reinterpret_cast<sophgo::Pair*>(pair.get())->signalExceptionExternal(msg);
     }
   }
 }
@@ -263,24 +272,27 @@ Rank::Rank(const std::vector<char>& bytes) {
   addressBytes = std::vector<char>(beginIter, endIter);
   bytesOffset += sizeof(addrSz) + addrSz;
   // pair identifiers
-  size_t pairIdChunkSz = bytes.size() - bytesOffset;
+  size_t pairIdChunkSz = bytes.size() - bytesOffset - sizeof(int);
   GLOO_ENFORCE_EQ(
-      pairIdChunkSz % sizeof(ssize_t),
-      0,
+      pairIdChunkSz % sizeof(ssize_t), 0,
       "Remaining bytes do not map to entire chunk of pair identifiers");
   size_t numPairs = pairIdChunkSz / sizeof(ssize_t);
   pairIdentifiers.resize(numPairs);
-  std::memcpy(pairIdentifiers.data(), bytes.data() + bytesOffset, pairIdChunkSz);
+  std::memcpy(pairIdentifiers.data(), bytes.data() + bytesOffset,
+              pairIdChunkSz);
+  bytesOffset += pairIdChunkSz;
+  std::memcpy(&dev_id, bytes.data() + bytesOffset, sizeof(int));
 }
 
 std::vector<char> Rank::bytes() const {
+  // Rank bytes 的结构：hostname长度 + hostname + address长度 + address + pair + dev_id 
   size_t hostnameSz = hostname.size();
   size_t addrSz = addressBytes.size();
   size_t numPairIds = pairIdentifiers.size();
   size_t pairIdSz = sizeof(ssize_t);
   size_t pairIdChunkSz = pairIdSz * numPairIds;
-  size_t totalSz = sizeof(hostnameSz) + hostnameSz + sizeof(addrSz) + addrSz +
-      pairIdChunkSz;
+  size_t totalSz =
+      sizeof(hostnameSz) + hostnameSz + sizeof(addrSz) + addrSz + pairIdChunkSz + sizeof(int);
   std::vector<char> buf(totalSz);
   auto bufOffset = buf.data();
   // hostname
@@ -295,9 +307,13 @@ std::vector<char> Rank::bytes() const {
   bufOffset += addrSz;
   // pair identifiers
   std::memcpy(bufOffset, pairIdentifiers.data(), pairIdChunkSz);
+  bufOffset += pairIdChunkSz;
+  // std::memcpy(bufOffset, &devidSz, sizeof(devidSz));
+  // bufOffset += sizeof(devidSz);
+  std::memcpy(bufOffset, &dev_id, sizeof(dev_id));
   return buf;
 }
 
-} // namespace tcp
-} // namespace transport
-} // namespace gloo
+}  // namespace sophgo
+}  // namespace transport
+}  // namespace gloo

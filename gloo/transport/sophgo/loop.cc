@@ -6,7 +6,7 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-#include <gloo/transport/tcp/loop.h>
+#include <gloo/transport/sophgo/loop.h>
 
 #include <fcntl.h>
 #include <string.h>
@@ -39,7 +39,7 @@ extern "C" void AnnotateHappensAfter(const char* f, int l, void* addr);
 
 namespace gloo {
 namespace transport {
-namespace tcp {
+namespace sophgo {
 
 Deferrables::Deferrables() {
   std::array<int, 2> fds;
@@ -172,6 +172,6 @@ void Loop::run() {
   }
 }
 
-} // namespace tcp
+} // namespace sophgo
 } // namespace transport
 } // namespace gloo

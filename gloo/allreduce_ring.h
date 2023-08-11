@@ -19,11 +19,9 @@ namespace gloo {
 template <typename T>
 class AllreduceRing : public Algorithm {
  public:
-  AllreduceRing(
-      const std::shared_ptr<Context>& context,
-      const std::vector<T*>& ptrs,
-      const int count,
-      const ReductionFunction<T>* fn = ReductionFunction<T>::sum)
+  AllreduceRing(const std::shared_ptr<Context>& context,
+                const std::vector<T*>& ptrs, const int count,
+                const ReductionFunction<T>* fn = ReductionFunction<T>::sum)
       : Algorithm(context),
         ptrs_(ptrs),
         count_(count),
@@ -36,9 +34,10 @@ class AllreduceRing : public Algorithm {
       return;
     }
 
-    auto& leftPair = this->getLeftPair();
+    auto& leftPair =
+        this->getLeftPair();  // 从context中取出来当前rank-1的通信对
     auto& rightPair = this->getRightPair();
-    auto slot = this->context_->nextSlot();
+    auto slot = this->context_->nextSlot();  // 什么含义？使context的slot增加了1
 
     // Buffer to send to (rank+1).
     sendDataBuf_ = rightPair->createSendBuffer(slot, outbox_, bytes_);
@@ -52,9 +51,9 @@ class AllreduceRing : public Algorithm {
     // into. No need for a global barrier.
     auto notificationSlot = this->context_->nextSlot();
     sendNotificationBuf_ =
-      leftPair->createSendBuffer(notificationSlot, &dummy_, sizeof(dummy_));
+        leftPair->createSendBuffer(notificationSlot, &dummy_, sizeof(dummy_));
     recvNotificationBuf_ =
-      rightPair->createRecvBuffer(notificationSlot, &dummy_, sizeof(dummy_));
+        rightPair->createRecvBuffer(notificationSlot, &dummy_, sizeof(dummy_));
   }
 
   virtual ~AllreduceRing() {
@@ -67,6 +66,7 @@ class AllreduceRing : public Algorithm {
   }
 
   void run() {
+    // count_ 有几个数
     if (count_ == 0) {
       return;
     }
@@ -80,8 +80,10 @@ class AllreduceRing : public Algorithm {
     memcpy(outbox_, ptrs_[0], bytes_);
 
     int numRounds = this->contextSize_ - 1;
+    // n-1次
     for (int round = 0; round < numRounds; round++) {
       // Initiate write to inbox of node on the right
+      // tcp/buffer.cc，这里会传一个size进去，也就是构造函数里的bytes_，然后把this放到Op里面
       sendDataBuf_->send();
 
       // Wait for inbox write from node on the left
@@ -128,4 +130,4 @@ class AllreduceRing : public Algorithm {
   std::unique_ptr<transport::Buffer> recvNotificationBuf_;
 };
 
-} // namespace gloo
+}  // namespace gloo
