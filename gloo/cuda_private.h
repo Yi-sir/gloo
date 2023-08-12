@@ -121,8 +121,9 @@ class CudaDeviceScope {
 // Convenience class used for tests and benchmarks.
 template<typename T>
 class CudaMemory {
+  // test_cuda里，传入的T是float，因此实例里维护的是float*
  public:
-  explicit CudaMemory(size_t elements);
+  explicit CudaMemory(size_t elements); // 传入的是count，会给ptr_分配GPU内的地址
   CudaMemory(CudaMemory&&) noexcept;
   ~CudaMemory() noexcept(false);
 

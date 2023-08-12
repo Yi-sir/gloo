@@ -67,6 +67,8 @@ CudaMemory<T>::CudaMemory(size_t elements)
   CUDA_CHECK(cudaGetDevice(&device_));
   // Sychronize memory allocation with NCCL operations
   std::lock_guard<std::mutex> lock(CudaShared::getMutex());
+  // 在GPU上申请内存，申请得到的dev mem首地址赋给了ptr
+  // 也就是说，cudaMalloc函数，向&ptr_写入了一个地址，这个地址是GPU里的
   CUDA_CHECK(cudaMalloc(&ptr_, bytes));
 }
 

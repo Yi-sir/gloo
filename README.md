@@ -31,8 +31,22 @@ cmake .. -DCMAKE_BUILD_TYPE=Debug -DBUILD_EXAMPLES=1 -DUSE_REDIS=1 -DUSE_SOPHGO=
 make -j4
 ```
 
+目前关于sophgo的cmake选项好像有点问题，如果不编译sophgo相关，需要将USE_SOPHGO显式设为0
+
 可以编译通过，可以识别到两个chip是否在同一个机器的同一张卡上
 
 运行结果如下：
 
 ![](./pics/example_sophgo.jpg)
+
+## Date 2023.8.11
+增加cuda单测，编译命令（需要cuda环境，没有的话cmake不能通过）：
+```bash
+cmake .. -DCMAKE_BUILD_TYPE=Debug -DBUILD_EXAMPLES=1 -DUSE_REDIS=1 -DUSE_SOPHGO=0 -DUSE_CUDA=1
+make -j4
+```
+
+运行方式:
+```bash
+./test_cuda <rank> <size>
+```

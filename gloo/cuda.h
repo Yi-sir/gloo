@@ -38,6 +38,7 @@ template<typename T>
 class CudaReductionFunction;
 
 class CudaShared {
+  // 管理同步cuda和nccl操作的互斥量
  public:
   // Get the mutex used to synchronize CUDA and NCCL operations
   static std::mutex& getMutex() {
@@ -54,6 +55,7 @@ class CudaShared {
 };
 
 class CudaStream {
+  // 管理cuda流，即异步操作的执行顺序
  public:
   explicit CudaStream(int deviceId, cudaStream_t stream = kStreamNotSet);
 
@@ -115,9 +117,11 @@ class CudaStream {
 
 template<typename T>
 class CudaDevicePointer {
+  // test_cuda里，传入的模板是float
  public:
   static CudaDevicePointer<T> alloc(size_t count);
 
+  // 调用构造函数，device_是输入的ptr_，即设备内存地址；count_为count；deviceId_是从ptr_获取的设备编号
   static CudaDevicePointer<T> create(T* ptr, size_t count);
 
   static CudaDevicePointer<T> create(const CudaDevicePointer<T>& ptr) {
