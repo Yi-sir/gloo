@@ -74,6 +74,7 @@ void CudaAllreduceRing<T, W>::run() {
   CudaDeviceGuard guard;
   CudaStream& stream = *scratchStream_;
 
+  // 更新scratch_
   if (localReduceOp_) {
     localReduceOp_->run();
   }
@@ -134,7 +135,7 @@ void CudaAllreduceRing<T, W>::init(
   // If devicePtrs_.size() == 1 these functions construct an op that
   // executes a memcpy such that scratch_ always holds the result.
   localReduceOp_ =
-    cudaHostReduce(streams_, devicePtrs_, scratch_, fn_, 0, count_);
+    cudaHostReduce(streams_, devicePtrs_, scratch_, fn_, 0, count_); // devicePtrs_是src，scratch_是dst。run方法将src拷贝到dst
   localBroadcastOp_ =
     cudaHostBroadcast(streams_, devicePtrs_, scratch_, 0, count_);
 

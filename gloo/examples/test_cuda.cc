@@ -24,7 +24,7 @@ int main(int argc, char* argv[]) {
   std::cout << "Cuda Device Num is " << availableCudaDevices << std::endl;
   if(availableCudaDevices == 0) {
     std::cout << "============== No Cuda Devices is Available! =============" << std::endl;
-    return;
+    return 1;
   }
 
   int rank = std::stoi(argv[1]);
@@ -72,7 +72,7 @@ int main(int argc, char* argv[]) {
     CudaDeviceScope scope(cudaStreams[i].getDeviceID());
     CUDA_CHECK(cudaStreamSynchronize(*cudaStreams[i]));
   }
-
+  // 这里的三个参数，特殊的是ptrs和streams。ptrs是指向一个cuda地址的指针，streams是cudaStream_t的vector
   auto algorithm = std::unique_ptr<::gloo::Algorithm>(
       new ::gloo::CudaAllreduceRing<float>(context, ptrs, count, streams));
   algorithm->run();

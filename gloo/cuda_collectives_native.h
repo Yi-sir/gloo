@@ -97,7 +97,7 @@ class CudaLocalNativeReduce : public LocalOp<T> {
 
   virtual void runAsync() {
     CudaDeviceGuard guard;
-    for (auto i = 0; i < steps_; i++) {
+    for (auto i = 0; i < steps_; i++) { // steps_ = log2(numPtrs_)
       auto sz = 1 << i;
       for (auto j = 0; j < numPtrs_; j += sz * 2) {
         const auto indexA = indices_[j];

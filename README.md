@@ -50,3 +50,6 @@ make -j4
 ```bash
 ./test_cuda <rank> <size>
 ```
+
+## Date 2023.8.14
+学习了cuda例程之后，感觉之前增加sophon backend方式不太好，可以参考cuda的方法，着重修改Op。

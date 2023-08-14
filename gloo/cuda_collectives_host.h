@@ -229,8 +229,8 @@ std::unique_ptr<LocalOp<T> > cudaHostReduce(
     return make_unique<
       CudaLocalMemcpy<T, CudaDevicePointer<T>, Dst> >(
           streams[0],
-          devicePtrs[0],
-          targetPtr,
+          devicePtrs[0],  // src
+          targetPtr,      // dst
           offset,
           count);
   }
