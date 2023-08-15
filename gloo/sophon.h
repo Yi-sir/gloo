@@ -19,6 +19,31 @@ class SophonDevicePointer;
 template <typename T>
 class SophonReductionFunction;
 
+enum class SophonMemType {
+  INT8,
+  INT,
+  FP32,
+  UNKNOWN
+}
+
+class SophonDeviceMem {
+ public:
+  SophonDeviceMem(int dev_id)
+      : dev_id_(dev_id),
+        handle_(nullptr),
+        type_(SophonMemType::UNKNOWN),
+        count_(0) {}
+  void allocMem(int count, SophonMemType type);
+  void requestHandle();
+  void updateMem(void* input);
+  bm_handle_t handle_;
+  bm_device_mem_t mem_;
+  SophonMemType type_;
+  int bytes_;
+  int count_;
+  int dev_id_;
+}
+
 class SophonStream {
  public:
   explicit SophonStream(int deviceId, bm_handle_t handle);
@@ -55,11 +80,11 @@ class SophonDevicePointer {
  public:
   static SophonDevicePointer<T> alloc(int devid, size_t count);
 
-//   static SophonDevicePointer<T> create(T* ptr, size_t count);
+  //   static SophonDevicePointer<T> create(T* ptr, size_t count);
 
-//   static SophonDevicePointer<T> create(const SophonDevicePointer<T>& ptr) {
-//     return SophonDevicePointer<T>::create(*ptr, ptr.getCount());
-//   }
+  //   static SophonDevicePointer<T> create(const SophonDevicePointer<T>& ptr) {
+  //     return SophonDevicePointer<T>::create(*ptr, ptr.getCount());
+  //   }
 
   static SophonDevicePointer<T> create(bm_handle_t handle, bm_device_mem_t mem,
                                        int devid);
@@ -83,7 +108,7 @@ class SophonDevicePointer {
 
   bm_device_mem_t operator*() const { return device_; }
 
-//   T& operator[](size_t index) const { return device_[index]; }
+  //   T& operator[](size_t index) const { return device_[index]; }
 
   int getCount() const { return count_; }
 
@@ -176,7 +201,8 @@ void sophonMin(T* x, const T* y, size_t n);
 
 template <typename T>
 class SophonReductionFunction {
-  using DeviceFunction = void(T*, const T*, size_t n);  // 可能需要改
+  // using DeviceFunction = void(T*, const T*, size_t n);  // 可能需要改
+  using DeviceFunction = void(SophonDeviceMem&, const T*, size_t n);
   using HostFunction = void(T*, const T*, size_t n);
 
  public:
@@ -192,9 +218,13 @@ class SophonReductionFunction {
 
   void call(T* x, const T* y, size_t n) const { return; }
 
-  void call(SophonDevicePointer<T>& dst, const SophonDevicePointer<T>& src,
-            size_t n) const {
-    deviceFn_(*dst, *src, n);
+  // void call(SophonDevicePointer<T>& dst, const SophonDevicePointer<T>& src,
+  //           size_t n) const {
+  //   deviceFn_(*dst, *src, n);
+  // }
+
+  void call(SophonDeviceMem& dst, const T* src, size_t n) const {
+    return deviceFn_(ddst, src, n);
   }
 
  protected:

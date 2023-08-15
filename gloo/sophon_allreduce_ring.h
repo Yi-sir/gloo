@@ -6,23 +6,22 @@
 namespace gloo {
 
 template <typename T>
-class SophonAllreducingRing : public Algorithm {
+class SophonAllreduceRing : public Algorithm {
  public:
-  SophonAllreducingRing(const std::shared_ptr<Context>& context,
-                        const std::vector<T*>& ptrs, const int count)
-      : Algorithm(context),
-        count_(count),
-        bytes_(count * sizeof(T)),
-        fn_(SophonReductionFunction<T>::sum) {}
+  SophonAllreduceRing(const std::shared_ptr<Context>& context,
+                        const std::vector<SophonDeviceMem>& mems, const int count);
 
-  virtual ~SophonAllreducingRing() = default;
+  virtual ~SophonAllreduceRing() = default;
 
   virtual void run() override;
 
  protected:
   void init();
-  std::vector<SophonDevicePointer<T>> devicePtrs_;
-  SophonDevicePointer<T> scratch_;
+  // std::vector<SophonDevicePointer<T>> devicePtrs_;
+  // SophonDevicePointer<T> scratch_;
+  std::vector<SophonDeviceMem> deviceMems_;
+  SophonDeviceMem deviceScratch_;
+  T* hostScratch_;
 
   const int count_;
   const int bytes_;
@@ -31,8 +30,11 @@ class SophonAllreducingRing : public Algorithm {
   std::unique_ptr<LocalOp<T>> localReduceOp_;
   std::unique_ptr<LocalOp<T>> localBroadcastOp_;
 
-  SophonDevicePointer<T> inbox_;
-  SophonDevicePointer<T> outbox_;
+  T* inbox_;
+  T* outbox_;
+
+  // SophonDevicePointer<T> inbox_;
+  // SophonDevicePointer<T> outbox_;
   std::unique_ptr<transport::Buffer> sendDataBuf_;
   std::unique_ptr<transport::Buffer> recvDataBuf_;
 

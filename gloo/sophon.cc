@@ -7,6 +7,37 @@ namespace gloo {
 
 const int kInvalidDeviceId = -1;
 
+void SophonDeviceMem::requestHandle() {
+  bm_dev_request(&handle_, dev_id_);
+}
+
+void SophonDeviceMem::allocMem(int count, SophonMemType type) {
+  count_ = count;
+  type_ = type;
+  if(handle_ != nullptr) {
+    int sz = 0;
+    switch (type_) {
+      case SophonMemType::INT8:
+        sz = count_ * sizeof(uint8_t);
+        break;
+      case SophonMemType::INT:
+        sz = count_ * sizeof(int);
+        break;
+      case SophonMemType::FP32:
+        sz = count_ * sizeof(_Float32);
+        break;
+      default:
+        sz = 1;
+    }
+    bytes = sz;
+    bm_malloc_device_byte(handle_, &mem_, sz);
+  }
+}
+
+void SophonDeviceMem::updateMem(void* input) {
+  bm_memcpy_s2d(handle_, mem_, input);
+}
+
 SophonStream::SophonStream(int deviceId, bm_handle_t handle) {
   deviceId_ = deviceId;
   handle_ = handle;

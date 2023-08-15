@@ -4,7 +4,9 @@
 #include "gloo/rendezvous/file_store.h"
 #include "gloo/rendezvous/redis_store.h"
 #include "gloo/sophgo_allreduce_ring.h"
+#include "gloo/sophon.h"
 #include "gloo/transport/tcp/device.h"
+
 
 int sophonNumDevices() {
   int n = 0;
@@ -20,8 +22,9 @@ int main(int argc, char* argv[]) {
 
   int availableSophonDevices = sophonNumDevices();
   std::cout << "Sophon Device Num is " << availableSophonDevices << std::endl;
-  if(availableSophonDevices == 0) {
-    std::cout << "============== No Sophon Devices is Available! =============" << std::endl;
+  if (availableSophonDevices == 0) {
+    std::cout << "============== No Sophon Devices is Available! ============="
+              << std::endl;
     return 1;
   }
 
@@ -29,11 +32,20 @@ int main(int argc, char* argv[]) {
   int size = std::stoi(argv[2]);
 
   auto store = gloo::rendezvous::RedisStore("172.26.13.171");
-//   auto store = gloo::rendezvous::FileStore("/tmp");
+  //   auto store = gloo::rendezvous::FileStore("/tmp");
 
   auto device = gloo::transport::tcp::CreateDevice("localhost");
   auto context = std::make_shared<gloo::rendezvous::Context>(rank, size);
   context->connectFullMesh(store, device);
 
   // 申请设备内存，构造gloo::SophonAllreduceRing
+  SophonDeviceMem dev(0); // device id
+  dev.requestHandle();
+  dev.allocMem(4, SophonMemType::INT);
+
+
+  int input[4] = {0,1,2,3};
+  dev.updateMem(input);
+
+  auto algorithm = std::unique_ptr<gloo::Algorithm>(new gloo::SophonAllreducRing<int>(context, ))
 }
