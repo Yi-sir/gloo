@@ -56,15 +56,15 @@ class SophonStream {
   bm_handle_t getHandle() const { return handle_; }
 
   template <typename T>
-  void copySync(T* dst, SophonDeviceMem& src);
+  void copySync(T* dst, SophonDeviceMem& src, size_t count);
 
   template <typename T>
-  void copySync(T* dst, T* src);
+  void copySync(T* dst, T* src, size_t count);
 
   template <typename T>
-  void copySync(SophonDeviceMem& dst, T* src);
+  void copySync(SophonDeviceMem& dst, T* src, size_t count);
 
-  void copySync(SophonDeviceMem& dst, SophonDeviceMem& src);
+  void copySync(SophonDeviceMem& dst, SophonDeviceMem& src, size_t count);
 
  protected:
   SophonStream(const SophonStream&) = delete;
@@ -197,7 +197,7 @@ class SophonLocalMemcpy : public LocalOp<T> {
   virtual void runAsync() {
     // 其实是同步的
     // bm_memcpy_d2s(src_.handle_, (void*)dst_, src_.mem_);
-    stream_.copySync(dst_, src_);
+    stream_.copySync(dst_, src_, count_);
   }
 
   virtual void wait() { return; }
@@ -252,15 +252,10 @@ class SophonReductionFunction {
       : type_(type), deviceFn_(deviceFn), hostFn_(hostFn) {}
   ReductionType type() const { return type_; }
 
-  void call(T* x, const T* y, size_t n) const { return; }
-
-  // void call(SophonDevicePointer<T>& dst, const SophonDevicePointer<T>& src,
-  //           size_t n) const {
-  //   deviceFn_(*dst, *src, n);
-  // }
+  void call(T* x, const T* y, size_t n) const { return hostFn_(x, y, n); }
 
   void call(SophonDeviceMem& dst, const T* src, size_t n) const {
-    return deviceFn_(ddst, src, n);
+    return deviceFn_(dst, src, n);
   }
 
  protected:

@@ -55,18 +55,18 @@ SophonStream::~SophonStream() noexcept(false) {
 }
 
 template <typename T>
-void SophonStream::copySync(T* dst, SophonDeviceMem& src) {
+void SophonStream::copySync(T* dst, SophonDeviceMem& src, size_t count) {
   bm_memcpy_d2s(src.handle_, (void*)dst, src.mem_);
 }
 
 template <typename T>
-void SophonStream::copySync(SophonDeviceMem& dst, T* src) {
+void SophonStream::copySync(SophonDeviceMem& dst, T* src, size_t count) {
   bm_memcpy_s2d(dst.handle_, dst.mem_, (void*)src);
 }
 
 template <typename T>
-void SophonStream::copySync(T* dst, T* src) {
-  memcpy((void*)dst, (void*)src, )
+void SophonStream::copySync(T* dst, T* src, size_t count) {
+  memcpy((void*)dst, (void*)src, count*sizeof(T));
 }
 
 void SophonStream::copySync(SophonDeviceMem& dst, SophonDeviceMem& src) {}
@@ -181,29 +181,29 @@ SophonHostPointer<T>::~SophonHostPointer() noexcept(false) {
 }
 
 // Instantiate templates
-#define INSTANTIATE_COPY_ASYNC(T)                                         \
-  template class SophonDevicePointer<T>;                                  \
-  template class SophonHostPointer<T>;                                    \
-                                                                          \
-  template void SophonStream::copyAsync<T>(SophonHostPointer<T> & dst,    \
-                                           SophonDevicePointer<T> & src); \
-                                                                          \
-  template void SophonStream::copyAsync<T>(SophonHostPointer<T> & dst,    \
-                                           SophonHostPointer<T> & src);   \
-                                                                          \
-  template void SophonStream::copyAsync<T>(SophonDevicePointer<T> & dst,  \
-                                           SophonDevicePointer<T> & src); \
-                                                                          \
-  template void SophonStream::copyAsync<T>(SophonDevicePointer<T> & dst,  \
-                                           SophonHostPointer<T> & src);
+// #define INSTANTIATE_COPY_ASYNC(T)                                         \
+//   template class SophonDevicePointer<T>;                                  \
+//   template class SophonHostPointer<T>;                                    \
+//                                                                           \
+//   template void SophonStream::copyAsync<T>(SophonHostPointer<T> & dst,    \
+//                                            SophonDevicePointer<T> & src); \
+//                                                                           \
+//   template void SophonStream::copyAsync<T>(SophonHostPointer<T> & dst,    \
+//                                            SophonHostPointer<T> & src);   \
+//                                                                           \
+//   template void SophonStream::copyAsync<T>(SophonDevicePointer<T> & dst,  \
+//                                            SophonDevicePointer<T> & src); \
+//                                                                           \
+//   template void SophonStream::copyAsync<T>(SophonDevicePointer<T> & dst,  \
+//                                            SophonHostPointer<T> & src);
 
-INSTANTIATE_COPY_ASYNC(int8_t);
-INSTANTIATE_COPY_ASYNC(uint8_t);
-INSTANTIATE_COPY_ASYNC(int32_t);
-INSTANTIATE_COPY_ASYNC(int64_t);
-INSTANTIATE_COPY_ASYNC(uint64_t);
-INSTANTIATE_COPY_ASYNC(float16);
-INSTANTIATE_COPY_ASYNC(float);
-INSTANTIATE_COPY_ASYNC(double);
+// INSTANTIATE_COPY_ASYNC(int8_t);
+// INSTANTIATE_COPY_ASYNC(uint8_t);
+// INSTANTIATE_COPY_ASYNC(int32_t);
+// INSTANTIATE_COPY_ASYNC(int64_t);
+// INSTANTIATE_COPY_ASYNC(uint64_t);
+// INSTANTIATE_COPY_ASYNC(float16);
+// INSTANTIATE_COPY_ASYNC(float);
+// INSTANTIATE_COPY_ASYNC(double);
 
 }  // namespace gloo
