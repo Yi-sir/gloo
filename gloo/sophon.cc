@@ -7,14 +7,12 @@ namespace gloo {
 
 const int kInvalidDeviceId = -1;
 
-void SophonDeviceMem::requestHandle() {
-  bm_dev_request(&handle_, dev_id_);
-}
+void SophonDeviceMem::requestHandle() { bm_dev_request(&handle_, dev_id_); }
 
 void SophonDeviceMem::allocMem(int count, SophonMemType type) {
   count_ = count;
   type_ = type;
-  if(handle_ != nullptr) {
+  if (handle_ != nullptr) {
     int sz = 0;
     switch (type_) {
       case SophonMemType::INT8:
@@ -55,6 +53,23 @@ SophonStream::~SophonStream() noexcept(false) {
   deviceId_ = kInvalidDeviceId;
   handle_ = nullptr;
 }
+
+template <typename T>
+void SophonStream::copySync(T* dst, SophonDeviceMem& src) {
+  bm_memcpy_d2s(src.handle_, (void*)dst, src.mem_);
+}
+
+template <typename T>
+void SophonStream::copySync(SophonDeviceMem& dst, T* src) {
+  bm_memcpy_s2d(dst.handle_, dst.mem_, (void*)src);
+}
+
+template <typename T>
+void SophonStream::copySync(T* dst, T* src) {
+  memcpy((void*)dst, (void*)src, )
+}
+
+void SophonStream::copySync(SophonDeviceMem& dst, SophonDeviceMem& src) {}
 
 template <typename T>
 void copy(SophonDevicePointer<T>& dst, SophonDevicePointer<T>& src) {
@@ -190,7 +205,5 @@ INSTANTIATE_COPY_ASYNC(uint64_t);
 INSTANTIATE_COPY_ASYNC(float16);
 INSTANTIATE_COPY_ASYNC(float);
 INSTANTIATE_COPY_ASYNC(double);
-
-
 
 }  // namespace gloo

@@ -9,7 +9,8 @@ template <typename T>
 class SophonAllreduceRing : public Algorithm {
  public:
   SophonAllreduceRing(const std::shared_ptr<Context>& context,
-                        const std::vector<SophonDeviceMem>& mems, const int count);
+                        const std::vector<SophonDeviceMem>& mems, const int count,
+                        const std::vector<SophonStream>& streams);
 
   virtual ~SophonAllreduceRing() = default;
 
@@ -20,7 +21,9 @@ class SophonAllreduceRing : public Algorithm {
   // std::vector<SophonDevicePointer<T>> devicePtrs_;
   // SophonDevicePointer<T> scratch_;
   std::vector<SophonDeviceMem> deviceMems_;
+  std::vector<SophonStream> streams_
   SophonDeviceMem deviceScratch_;
+  SophonStream* scratchStream_;
   T* hostScratch_;
 
   const int count_;

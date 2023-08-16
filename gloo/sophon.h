@@ -55,17 +55,16 @@ class SophonStream {
   int getDeviceID() const { return deviceId_; }
   bm_handle_t getHandle() const { return handle_; }
 
-  template typename T >
-      void copy(SophonDevicePointer<T>& dst, SophonDevicePointer<T>& src);
+  template <typename T>
+  void copySync(T* dst, SophonDeviceMem& src);
 
   template <typename T>
-  void copy(SophonHostPointer<T>& dst, SophonHostPointer<T>& src);
+  void copySync(T* dst, T* src);
 
   template <typename T>
-  void copy(SophonHostPointer<T>& dst, SophonDevicePointer<T>& src);
+  void copySync(SophonDeviceMem& dst, T* src);
 
-  template <typename T>
-  void copy(SophonDevicePointer<T>& dst, SophonHostPointer<T>& src);
+  void copySync(SophonDeviceMem& dst, SophonDeviceMem& src);
 
  protected:
   SophonStream(const SophonStream&) = delete;
@@ -186,6 +185,43 @@ class SophonHostPointer {
 
   int deviceId_;
 };
+
+template <typename T, typename Src, Typename Dst>
+class SophonLocalMemcpy : public LocalOp<T> {
+ public:
+  // 是不是两个参数都可以模板化？
+  SophonLocalMemcpy(SophonStream& stream, Src& src, Dst& dst, size_t offset,
+                    size_t count)
+      : stream_(stream), src_(src), dst_(dst), offset_(offset), count_(count) {}
+
+  virtual void runAsync() {
+    // 其实是同步的
+    // bm_memcpy_d2s(src_.handle_, (void*)dst_, src_.mem_);
+    stream_.copySync(dst_, src_);
+  }
+
+  virtual void wait() { return; }
+
+  // template <typename T>
+  // void copySync(T* dst, SophonDeviceMem& src);
+
+  // template <typename T>
+  // void copySync(T* dst, T* src);
+
+  // template <typename T>
+  // void copySync(SophonDeviceMem& dst, T* src);
+
+  // void copySync(SophonDeviceMem& dst, SophonDeviceMem& src);
+
+ protected:
+  SophonStream& stream_;
+  Src src_;
+  Dst dst_;
+  size_t offset_;
+  size_t count_;
+}
+
+template <typename T>
 
 template <typename T>
 void sophonSum(T* x, const T* y, size_t n);
