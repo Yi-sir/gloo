@@ -2,24 +2,40 @@
 
 本仓库为添加了用于在SOPHON设备上进行通信的后端代码的GLOO库
 
-## Date 2023.8.9
-本仓库中，example1从原本的单机多进程通信改为了单机/多机多进程通信
+## Date 2023.8.18
+删除`example_sophgo`例程及相关代码，参考cuda增加`sophon.h`, `sophon_allreduce_ring.h`, `sophon_collectives_host.h`等文件，增加`test_sophgo`例程，申请设备内存并进行通信，支持多机通信(多机通信依赖redis，需要参考文末配置redis服务)。
 
-对于用于通信的主机，需要使用命令：```sudo apt install redis-server``` 安装redis服务
-运行该例程，需要参考下面的命令
+编译命令：
 
 ```bash
-# 安装redis
-sudo apt-get install libhiredis-dev
-mkdir build
-cd build
-cmake .. -DCMAKE_BUILD_TYPE=Debug -DBUILD_EXAMPLES=1 -DUSE_REDIS=1
+cmake .. -DCMAKE_BUILD_TYPE=Debug -DBUILD_EXAMPLES=1 -DUSE_REDIS=1 -DUSE_SOPHGO=1
 make -j4
 ```
 
-安装redis并编译好之后，直接运行可能会报无法访问redis主机的错误。
+运行命令：
 
-这时，需要修改redis配置文件(redis.conf)中的bind选项为0.0.0.0
+```bash
+./test_sophgo <rank> <size>
+```
+
+已知问题：由于SophonLocalMemcpy里也持有了一份DeviceMem，所以在析构阶段会出现double free。打印结构体信息或查阅bmlib文档都没有找到能判断一片device mem是否被释放的flag，需要套一层指针或者阅读libsophon来解决。
+
+已解决：套了一层智能指针
+
+## Date 2023.8.14
+学习了cuda例程之后，感觉之前增加sophon backend方式不太好，可以参考cuda的方法，着重修改Op。
+
+## Date 2023.8.11
+增加cuda单测，编译命令（需要cuda环境，没有的话cmake不能通过）：
+```bash
+cmake .. -DCMAKE_BUILD_TYPE=Debug -DBUILD_EXAMPLES=1 -DUSE_REDIS=1 -DUSE_SOPHGO=0 -DUSE_CUDA=1
+make -j4
+```
+
+运行方式:
+```bash
+./test_cuda <rank> <size>
+```
 
 ## Date 2023.8.10
 增加example_sophgo.cc
@@ -39,33 +55,28 @@ make -j4
 
 ![](./pics/example_sophgo.jpg)
 
-## Date 2023.8.11
-增加cuda单测，编译命令（需要cuda环境，没有的话cmake不能通过）：
+## Date 2023.8.9
+本仓库中，example1从原本的单机多进程通信改为了单机/多机多进程通信
+
+对于用于通信的主机，需要使用命令：```sudo apt install redis-server``` 安装redis服务
+运行该例程，需要参考下面的命令
+
 ```bash
-cmake .. -DCMAKE_BUILD_TYPE=Debug -DBUILD_EXAMPLES=1 -DUSE_REDIS=1 -DUSE_SOPHGO=0 -DUSE_CUDA=1
+# 安装redis
+sudo apt-get install libhiredis-dev
+mkdir build
+cd build
+cmake .. -DCMAKE_BUILD_TYPE=Debug -DBUILD_EXAMPLES=1 -DUSE_REDIS=1
 make -j4
 ```
 
-运行方式:
-```bash
-./test_cuda <rank> <size>
-```
+安装redis并编译好之后，直接运行可能会报无法访问redis主机的错误。
 
-## Date 2023.8.14
-学习了cuda例程之后，感觉之前增加sophon backend方式不太好，可以参考cuda的方法，着重修改Op。
+这时，需要修改redis配置文件(redis.conf)中的bind选项为0.0.0.0
 
-## Date 2023.8.18
-参考cuda增加sophon.h,sophon_allreduce_ring.h,sophon_collectives_host.h等文件，增加test_sophgo例程，申请设备内存并进行通信，支持多机通信(多机通信依赖redis，需要参考上文配置redis服务)。
 
-编译命令：
 
-```bash
-cmake .. -DCMAKE_BUILD_TYPE=Debug -DBUILD_EXAMPLES=1 -DUSE_REDIS=1 -DUSE_SOPHGO=1
-make -j4
-```
 
-运行命令：
 
-```bash
-./test_sophgo <rank> <size>
-```
+
+

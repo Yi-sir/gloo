@@ -1,8 +1,9 @@
 #include "gloo/sophon.h"
 
+#include <cstring>
+
 #include "bmlib_runtime.h"
 #include "bmruntime_interface.h"
-#include <cstring>
 
 namespace gloo {
 
@@ -70,13 +71,15 @@ SophonStream::~SophonStream() noexcept(false) {
 }
 
 template <typename T>
-void SophonStream::copySync(T* dst, SophonDeviceMem& src, size_t count) {
-  bm_memcpy_d2s(src.handle_, (void*)dst, src.mem_);
+void SophonStream::copySync(T* dst, std::shared_ptr<SophonDeviceMem>& src,
+                            size_t count) {
+  bm_memcpy_d2s(src->handle_, (void*)dst, src->mem_);
 }
 
 template <typename T>
-void SophonStream::copySync(SophonDeviceMem& dst, T* src, size_t count) {
-  bm_memcpy_s2d(dst.handle_, dst.mem_, (void*)src);
+void SophonStream::copySync(std::shared_ptr<SophonDeviceMem>& dst, T* src,
+                            size_t count) {
+  bm_memcpy_s2d(dst->handle_, dst->mem_, (void*)src);
 }
 
 // template <typename T>
@@ -91,12 +94,16 @@ void SophonStream::copySync(T* dst, T* src, size_t count) {
   memcpy((void*)dst, (void*)src, bytes);
 }
 
-void SophonStream::copySync(SophonDeviceMem& dst, SophonDeviceMem& src, size_t count) {}
+void SophonStream::copySync(std::shared_ptr<SophonDeviceMem>& dst,
+                            std::shared_ptr<SophonDeviceMem>& src,
+                            size_t count) {}
 
-#define INSTANTIATE_COPY_SYNC(T)                                                        \
-template void SophonStream::copySync<T>(T* dst, T* src, size_t count);                  \
-template void SophonStream::copySync<T>(T* dst, SophonDeviceMem& src, size_t count);    \
-template void SophonStream::copySync<T>(SophonDeviceMem& dst, T* src, size_t count);
+#define INSTANTIATE_COPY_SYNC(T)                                           \
+  template void SophonStream::copySync<T>(T * dst, T * src, size_t count); \
+  template void SophonStream::copySync<T>(                                 \
+      T * dst, std::shared_ptr<SophonDeviceMem> & src, size_t count);      \
+  template void SophonStream::copySync<T>(                                 \
+      std::shared_ptr<SophonDeviceMem> & dst, T * src, size_t count);
 
 INSTANTIATE_COPY_SYNC(int)
 INSTANTIATE_COPY_SYNC(float)
@@ -123,7 +130,8 @@ INSTANTIATE_COPY_SYNC(float)
 // }
 
 // template <typename T>
-// SophonDevicePointer<T> SophonDevicePointer<T>::alloc(int devid, size_t count) {
+// SophonDevicePointer<T> SophonDevicePointer<T>::alloc(int devid, size_t count)
+// {
 //   bm_handle_t handle_;
 //   bm_device_mem_t mem_;
 //   bm_dev_request(&handle_, devid);

@@ -12,11 +12,12 @@ namespace gloo {
 template <typename T>
 std::unique_ptr<LocalOp<T>> SophonHostReduce(
     std::vector<SophonStream>& streams,
-    std::vector<SophonDeviceMem>& deviceMems, T* dst,
+    std::vector<std::shared_ptr<SophonDeviceMem>>& deviceMems, T* dst,
     const SophonReductionFunction<T>* fn, size_t offset, size_t count) {
   if (deviceMems.size() == 1) {
-    return make_unique<SophonLocalMemcpy<T, SophonDeviceMem, T*>>(streams[0], deviceMems[0], dst,
-                                             offset, count);
+    return make_unique<
+        SophonLocalMemcpy<T, std::shared_ptr<SophonDeviceMem>, T*>>(
+        streams[0], deviceMems[0], dst, offset, count);
   }
   // else {
   //     return make_unique
@@ -26,11 +27,12 @@ std::unique_ptr<LocalOp<T>> SophonHostReduce(
 template <typename T>
 std::unique_ptr<LocalOp<T>> SophonHostBroadcast(
     std::vector<SophonStream>& streams,
-    std::vector<SophonDeviceMem>& deviceMems, T* src, size_t offset,
-    size_t count) {
+    std::vector<std::shared_ptr<SophonDeviceMem>>& deviceMems, T* src,
+    size_t offset, size_t count) {
   if (deviceMems.size() == 1) {
-    return make_unique<SophonLocalMemcpy<T, T*, SophonDeviceMem>>(streams[0], src, deviceMems[0],
-                                             offset, count);
+    return make_unique<
+        SophonLocalMemcpy<T, T*, std::shared_ptr<SophonDeviceMem>>>(
+        streams[0], src, deviceMems[0], offset, count);
   }
 }
 

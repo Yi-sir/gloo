@@ -57,15 +57,16 @@ class SophonStream {
   void wait() {}
 
   template <typename T>
-  void copySync(T* dst, SophonDeviceMem& src, size_t count);
+  void copySync(T* dst, std::shared_ptr<SophonDeviceMem>& src, size_t count);
 
   template <typename T>
   void copySync(T* dst, T* src, size_t count);
 
   template <typename T>
-  void copySync(SophonDeviceMem& dst, T* src, size_t count);
+  void copySync(std::shared_ptr<SophonDeviceMem>& dst, T* src, size_t count);
 
-  void copySync(SophonDeviceMem& dst, SophonDeviceMem& src, size_t count);
+  void copySync(std::shared_ptr<SophonDeviceMem>& dst,
+                std::shared_ptr<SophonDeviceMem>& src, size_t count);
 
  protected:
   // SophonStream(const SophonStream&) = delete;
@@ -222,16 +223,16 @@ class SophonLocalMemcpy : public LocalOp<T> {
 };
 
 template <typename T>
-void sophonSum(SophonDeviceMem& x, const T* y, size_t n) {};
+void sophonSum(SophonDeviceMem& x, const T* y, size_t n){};
 
 template <typename T>
-void sophonProduct(SophonDeviceMem& x, const T* y, size_t n) {};
+void sophonProduct(SophonDeviceMem& x, const T* y, size_t n){};
 
 template <typename T>
-void sophonMax(SophonDeviceMem& x, const T* y, size_t n) {};
+void sophonMax(SophonDeviceMem& x, const T* y, size_t n){};
 
 template <typename T>
-void sophonMin(SophonDeviceMem& x, const T* y, size_t n) {};
+void sophonMin(SophonDeviceMem& x, const T* y, size_t n){};
 
 // #define INSTANTIATE_TEMPLATE(T) template sophonSum<T>;
 

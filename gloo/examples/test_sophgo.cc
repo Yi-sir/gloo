@@ -30,7 +30,10 @@ int main(int argc, char* argv[]) {
   int rank = std::stoi(argv[1]);
   int size = std::stoi(argv[2]);
 
+  // 多机通信，需要开启redis服务，ip需要参考当前网络环境进行修改
   auto store = gloo::rendezvous::RedisStore("172.26.13.171");
+
+  // 单机多进程通信，可以使用redis服务，也可以使用本地文件系统
   //   auto store = gloo::rendezvous::FileStore("/tmp");
 
   auto device = gloo::transport::tcp::CreateDevice("localhost");
@@ -38,26 +41,30 @@ int main(int argc, char* argv[]) {
   context->connectFullMesh(store, device);
 
   // 申请设备内存，构造gloo::SophonAllreduceRing
-  gloo::SophonDeviceMem dev(0);  // device id
+  // gloo::SophonDeviceMem dev(0);  // device id
+
+  std::shared_ptr<gloo::SophonDeviceMem> dev(new gloo::SophonDeviceMem(0));
   int count = 4;
 
-  dev.requestHandle();
-  dev.allocMem(count, gloo::SophonMemType::INT);
+  // 初始化handle和设备内存
+  dev->requestHandle();
+  dev->allocMem(count, gloo::SophonMemType::INT);
   int* input = new int[count];
   std::iota(input, input + 4, 0);
-  dev.updateMem(input);
-  std::vector<gloo::SophonDeviceMem> mems;
+  dev->updateMem(input);
+
+  std::vector<std::shared_ptr<gloo::SophonDeviceMem>> mems;
   mems.push_back(dev);
 
   std::vector<gloo::SophonStream> streams;
-  streams.push_back(gloo::SophonStream(0, dev.handle_));
+  streams.push_back(gloo::SophonStream(0, dev->handle_));
 
   auto algorithm = std::unique_ptr<gloo::Algorithm>(
       new gloo::SophonAllreduceRing<int>(context, mems, count, streams));
   algorithm->run();
 
   int* output = new int [count];
-  dev.updateHost((void*)output);
+  dev->updateHost((void*)output);
 
   for(int i = 0; i < count; ++i) {
     std::cout << output[i] << " ";

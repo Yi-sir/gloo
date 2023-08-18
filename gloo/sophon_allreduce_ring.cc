@@ -1,21 +1,22 @@
 #include "gloo/sophon_allreduce_ring.h"
-#include "gloo/sophon_collectives_host.h"
+
 #include <cstring>
 
 #include "gloo/algorithm.h"
+#include "gloo/sophon_collectives_host.h"
 
 namespace gloo {
 
 template <typename T>
 SophonAllreduceRing<T>::SophonAllreduceRing(
     const std::shared_ptr<Context>& context,
-    const std::vector<SophonDeviceMem>& mems, const int count,
+    const std::vector<std::shared_ptr<SophonDeviceMem>>& mems, const int count,
     const std::vector<SophonStream>& streams)
     : Algorithm(context),
       count_(count),
-      bytes_(mems[0].bytes_),
+      bytes_(mems[0]->bytes_),
       fn_(SophonReductionFunction<T>::sum),
-      deviceScratch_(mems[0].dev_id_) {
+      deviceScratch_(mems[0]->dev_id_) {
   int n = mems.size();
   for (int i = 0; i < n; ++i) {
     deviceMems_.push_back(mems[i]);
@@ -79,7 +80,7 @@ void SophonAllreduceRing<T>::run() {
 template <typename T>
 void SophonAllreduceRing<T>::init() {
   deviceScratch_.requestHandle();
-  deviceScratch_.allocMem(count_, deviceMems_[0].type_);
+  deviceScratch_.allocMem(count_, deviceMems_[0]->type_);
 
   scratchStream_ = &streams_[0];
 
