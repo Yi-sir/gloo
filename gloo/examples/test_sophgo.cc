@@ -36,7 +36,13 @@ int main(int argc, char* argv[]) {
   // 单机多进程通信，可以使用redis服务，也可以使用本地文件系统
   //   auto store = gloo::rendezvous::FileStore("/tmp");
 
-  auto device = gloo::transport::tcp::CreateDevice("localhost");
+  // 多机通信，attr需要按照本机ip进行配置
+  gloo::transport::tcp::attr attr;
+  attr.iface = "eno1";
+  attr.hostname = "172.26.13.180";
+
+  // 多机通信，device构造参数需要使用attr；单机通信可以使用"localhost"，该情况下无法多机通信
+  auto device = gloo::transport::tcp::CreateDevice(attr);
   auto context = std::make_shared<gloo::rendezvous::Context>(rank, size);
   context->connectFullMesh(store, device);
 

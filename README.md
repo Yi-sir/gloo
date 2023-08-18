@@ -18,9 +18,8 @@ make -j4
 ./test_sophgo <rank> <size>
 ```
 
-已知问题：由于SophonLocalMemcpy里也持有了一份DeviceMem，所以在析构阶段会出现double free。打印结构体信息或查阅bmlib文档都没有找到能判断一片device mem是否被释放的flag，需要套一层指针或者阅读libsophon来解决。
-
-已解决：套了一层智能指针
+三机器通信结果：
+![三机器通信](./pics/369.png)
 
 ## Date 2023.8.14
 学习了cuda例程之后，感觉之前增加sophon backend方式不太好，可以参考cuda的方法，着重修改Op。
