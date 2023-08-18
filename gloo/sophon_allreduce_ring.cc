@@ -1,4 +1,6 @@
 #include "gloo/sophon_allreduce_ring.h"
+#include "gloo/sophon_collectives_host.h"
+#include <cstring>
 
 #include "gloo/algorithm.h"
 
@@ -12,7 +14,7 @@ SophonAllreduceRing<T>::SophonAllreduceRing(
     : Algorithm(context),
       count_(count),
       bytes_(mems[0].bytes_),
-      fn_(ReductionFunction<T>::sum),
+      fn_(SophonReductionFunction<T>::sum),
       deviceScratch_(mems[0].dev_id_) {
   int n = mems.size();
   for (int i = 0; i < n; ++i) {
@@ -27,10 +29,10 @@ SophonAllreduceRing<T>::SophonAllreduceRing(
   auto slot = this->context_->nextSlot();
 
   // Buffer to send to (rank+1).
-  sendDataBuf_ = rightPair->createSendBuffer(slot, *outbox_, bytes_);
+  sendDataBuf_ = rightPair->createSendBuffer(slot, outbox_, bytes_);
 
   // Buffer that (rank-1) writes to.
-  recvDataBuf_ = leftPair->createRecvBuffer(slot, *inbox_, bytes_);
+  recvDataBuf_ = leftPair->createRecvBuffer(slot, inbox_, bytes_);
 
   auto notificationSlot = this->context_->nextSlot();
   sendNotificationBuf_ =
@@ -47,7 +49,7 @@ void SophonAllreduceRing<T>::run() {
 
   SophonStream& stream = *scratchStream_;
 
-  stream.copySync(outbox_, hostScratch_);
+  stream.copySync(outbox_, hostScratch_, count_);
   stream.wait();
 
   int numRounds = this->contextSize_ - 1;
@@ -79,12 +81,12 @@ void SophonAllreduceRing<T>::init() {
   deviceScratch_.requestHandle();
   deviceScratch_.allocMem(count_, deviceMems_[0].type_);
 
-  scratchStream_ = &streams[0];
+  scratchStream_ = &streams_[0];
 
   hostScratch_ = new T[count_];
 
   localReduceOp_ =
-      SophonHostReduce(streams_, deviceMems_, hostScratch_, 0, count_);
+      SophonHostReduce(streams_, deviceMems_, hostScratch_, fn_, 0, count_);
   localBroadcastOp_ =
       SophonHostBroadcast(streams_, deviceMems_, hostScratch_, 0, count_);
 
@@ -94,8 +96,8 @@ void SophonAllreduceRing<T>::init() {
 
 #define INSTANTIATE_TEMPLATE(T) template class SophonAllreduceRing<T>;
 
-INSTANTIATE_TEMPLATE(int8_t);
+// INSTANTIATE_TEMPLATE(int8_t);
 INSTANTIATE_TEMPLATE(int);
-INSTANTIATE_TEMPLATE(float);
+// INSTANTIATE_TEMPLATE(float);
 
 }  // namespace gloo

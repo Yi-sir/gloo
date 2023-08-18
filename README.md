@@ -53,3 +53,19 @@ make -j4
 
 ## Date 2023.8.14
 学习了cuda例程之后，感觉之前增加sophon backend方式不太好，可以参考cuda的方法，着重修改Op。
+
+## Date 2023.8.18
+参考cuda增加sophon.h,sophon_allreduce_ring.h,sophon_collectives_host.h等文件，增加test_sophgo例程，申请设备内存并进行通信，支持多机通信(多机通信依赖redis，需要参考上文配置redis服务)。
+
+编译命令：
+
+```bash
+cmake .. -DCMAKE_BUILD_TYPE=Debug -DBUILD_EXAMPLES=1 -DUSE_REDIS=1 -DUSE_SOPHGO=1
+make -j4
+```
+
+运行命令：
+
+```bash
+./test_sophgo <rank> <size>
+```

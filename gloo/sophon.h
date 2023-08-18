@@ -19,12 +19,7 @@ class SophonDevicePointer;
 template <typename T>
 class SophonReductionFunction;
 
-enum class SophonMemType {
-  INT8,
-  INT,
-  FP32,
-  UNKNOWN
-}
+enum class SophonMemType { INT8, INT, FP32, UNKNOWN };
 
 class SophonDeviceMem {
  public:
@@ -33,16 +28,18 @@ class SophonDeviceMem {
         handle_(nullptr),
         type_(SophonMemType::UNKNOWN),
         count_(0) {}
+  ~SophonDeviceMem();
   void allocMem(int count, SophonMemType type);
   void requestHandle();
   void updateMem(void* input);
+  void updateHost(void* output);
   bm_handle_t handle_;
   bm_device_mem_t mem_;
   SophonMemType type_;
   int bytes_;
   int count_;
   int dev_id_;
-}
+};
 
 class SophonStream {
  public:
@@ -50,10 +47,14 @@ class SophonStream {
 
   SophonStream(SophonStream&& other) noexcept;
 
+  SophonStream(const SophonStream& other);
+
   ~SophonStream() noexcept(false);
 
   int getDeviceID() const { return deviceId_; }
   bm_handle_t getHandle() const { return handle_; }
+
+  void wait() {}
 
   template <typename T>
   void copySync(T* dst, SophonDeviceMem& src, size_t count);
@@ -67,126 +68,125 @@ class SophonStream {
   void copySync(SophonDeviceMem& dst, SophonDeviceMem& src, size_t count);
 
  protected:
-  SophonStream(const SophonStream&) = delete;
-  SophonStream& operator=(const SophonStream&) = delete;
+  // SophonStream(const SophonStream&) = delete;
+  // SophonStream& operator=(const SophonStream&) = delete;
 
   int deviceId_;
   bm_handle_t handle_;
 };
 
-template <typename T>
-class SophonDevicePointer {
- public:
-  static SophonDevicePointer<T> alloc(int devid, size_t count);
+// template <typename T>
+// class SophonDevicePointer {
+//  public:
+//   static SophonDevicePointer<T> alloc(int devid, size_t count);
 
-  //   static SophonDevicePointer<T> create(T* ptr, size_t count);
+//   //   static SophonDevicePointer<T> create(T* ptr, size_t count);
 
-  //   static SophonDevicePointer<T> create(const SophonDevicePointer<T>& ptr) {
-  //     return SophonDevicePointer<T>::create(*ptr, ptr.getCount());
-  //   }
+//   //   static SophonDevicePointer<T> create(const SophonDevicePointer<T>&
+//   ptr) {
+//   //     return SophonDevicePointer<T>::create(*ptr, ptr.getCount());
+//   //   }
 
-  static SophonDevicePointer<T> create(bm_handle_t handle, bm_device_mem_t mem,
-                                       int devid);
+//   static SophonDevicePointer<T> create(bm_handle_t handle, bm_device_mem_t
+//   mem,
+//                                        int devid);
 
-  int getDeviceID() const { return deviceId_; }
-  bm_device_mem_t getMem() const { return device_; }
-  bm_handle_t getHandle() const { return handle_; }
+//   int getDeviceID() const { return deviceId_; }
+//   bm_device_mem_t getMem() const { return device_; }
+//   bm_handle_t getHandle() const { return handle_; }
 
-  SophonDevicePointer(SophonDevicePointer&&) noexcept;
-  ~SophonDevicePointer();
+//   SophonDevicePointer(SophonDevicePointer&&) noexcept;
+//   ~SophonDevicePointer();
 
-  SophonDevicePointer()
-      : device_(nullptr), count_(0), deviceId(kInvalidDeviceId) {}
+//   SophonDevicePointer()
+//       : device_(nullptr), count_(0), deviceId_(kInvalidDeviceId) {}
 
-  SophonDevicePointer& operator=(SophonDevicePointer&&);
+//   SophonDevicePointer& operator=(SophonDevicePointer&&);
 
-  bool operator==(const SophonDevicePointer<T>& other) const {
-    return device_.u.device.device_addr == other.device_u.device.device_addr &&
-           count_ == other.count_;
-  }
+//   bool operator==(const SophonDevicePointer<T>& other) const {
+//     return device_.u.device.device_addr == other.device_u.device.device_addr
+//     &&
+//            count_ == other.count_;
+//   }
 
-  bm_device_mem_t operator*() const { return device_; }
+//   bm_device_mem_t operator*() const { return device_; }
 
-  //   T& operator[](size_t index) const { return device_[index]; }
+//   //   T& operator[](size_t index) const { return device_[index]; }
 
-  int getCount() const { return count_; }
+//   int getCount() const { return count_; }
 
-  int getDeviceID() const { return deviceId_; }
+//  protected:
+//   //   SophonDevicePointer(T* ptr, size_t count, bool owner);
 
- protected:
-  //   SophonDevicePointer(T* ptr, size_t count, bool owner);
+//   SophonDevicePointer(bm_handle_t handle, bm_device_mem_t mem, int devid);
 
-  SophonDevicePointer(bm_handle_t handle, bm_device_mem_t mem, int devid);
+//   SophonDevicePointer(const SophonDevicePointer&) = delete;
+//   SophonDevicePointer& operator=(const SophonDevicePointer&) = delete;
 
-  SophonDevicePointer(const SophonDevicePointer&) = delete;
-  SophonDevicePointer& operator=(const SophonDevicePointer&) = delete;
+//   //   T* device_;
 
-  //   T* device_;
+//   bm_device_mem_t device_;
+//   bm_handle_t handle_;
 
-  bm_device_mem_t device_;
-  bm_handle_t handle_;
+//   size_t count_;
 
-  size_t count_;
+//   //   bool owner_ = false;
 
-  //   bool owner_ = false;
+//   int deviceId_;
+// };
 
-  int deviceId_;
-};
+// template <typename T>
+// class SophonHostPointer {
+//  public:
+//   static SophonHostPointer<T> alloc(size_t count);
 
-template <typename T>
-class SophonHostPointer {
- public:
-  static SophonHostPointer<T> alloc(size_t count);
+//   static SophonHostPointer<T> create(T* ptr, size_t count);
 
-  static SophonHostPointer<T> create(T* ptr, size_t count);
+//   static SophonHostPointer<T> create(const SophonHostPointer<T>& ptr) {
+//     return SophonHostPointer<T>::create(*ptr, ptr.getCount());
+//   }
 
-  static SophonHostPointer<T> create(const SophonHostPointer<T>& ptr) {
-    return SophonHostPointer<T>::create(*ptr, ptr.getCount());
-  }
+//   int getDeviceID() const { return deviceId_; }
+//   T* getMem() const { return host_; }
+//   bm_handle_t getHandle() const { return handle_; }
 
-  int getDeviceID() const { return deviceId_; }
-  T* getMem() const { return device_; }
-  bm_handle_t getHandle() const { return handle_; }
+//   SophonHostPointer(SophonHostPointer&&) noexcept;
+//   ~SophonHostPointer();
 
-  SophonHostPointer(SophonHostPointer&&) noexcept;
-  ~SophonHostPointer();
+//   SophonHostPointer()
+//       : host_(nullptr), count_(0), deviceId_(kInvalidDeviceId) {}
 
-  SophonHostPointer()
-      : device_(nullptr), count_(0), deviceId(kInvalidDeviceId) {}
+//   SophonHostPointer& operator=(SophonHostPointer&&);
 
-  SophonHostPointer& operator=(SophonHostPointer&&);
+//   bool operator==(const SophonHostPointer<T>& other) const {
+//     return host_ == other.host_ && count_ == other.count_;
+//   }
 
-  bool operator==(const SophonHostPointer<T>& other) const {
-    return device_ == other.device_ && count_ == other.count_;
-  }
+//   T* operator*() const { return host_; }
 
-  T* operator*() const { return device_; }
+//   T& operator[](size_t index) const { return host_[index]; }
 
-  T& operator[](size_t index) const { return device_[index]; }
+//   int getCount() const { return count_; }
 
-  int getCount() const { return count_; }
+//  protected:
+//   SophonHostPointer(T* ptr, size_t count, bool owner);
 
-  int getDeviceID() const { return deviceId_; }
+//   SophonHostPointer(const SophonHostPointer&) = delete;
+//   SophonHostPointer& operator=(const SophonHostPointer&) = delete;
 
- protected:
-  SophonHostPointer(T* ptr, size_t count, bool owner);
+//   T* host_;
 
-  SophonHostPointer(const SophonHostPointer&) = delete;
-  SophonHostPointer& operator=(const SophonHostPointer&) = delete;
+//   //   bm_device_mem_t device_;
+//   bm_handle_t handle_;
 
-  T* host_;
+//   size_t count_;
 
-  //   bm_device_mem_t device_;
-  bm_handle_t handle_;
+//   bool owner_ = false;
 
-  size_t count_;
+//   int deviceId_;
+// };
 
-  bool owner_ = false;
-
-  int deviceId_;
-};
-
-template <typename T, typename Src, Typename Dst>
+template <typename T, typename Src, typename Dst>
 class SophonLocalMemcpy : public LocalOp<T> {
  public:
   // 是不是两个参数都可以模板化？
@@ -219,21 +219,21 @@ class SophonLocalMemcpy : public LocalOp<T> {
   Dst dst_;
   size_t offset_;
   size_t count_;
-}
+};
 
 template <typename T>
+void sophonSum(SophonDeviceMem& x, const T* y, size_t n) {};
 
 template <typename T>
-void sophonSum(T* x, const T* y, size_t n);
+void sophonProduct(SophonDeviceMem& x, const T* y, size_t n) {};
 
 template <typename T>
-void sophonProduct(T* x, const T* y, size_t n);
+void sophonMax(SophonDeviceMem& x, const T* y, size_t n) {};
 
 template <typename T>
-void sophonMax(T* x, const T* y, size_t n);
+void sophonMin(SophonDeviceMem& x, const T* y, size_t n) {};
 
-template <typename T>
-void sophonMin(T* x, const T* y, size_t n);
+// #define INSTANTIATE_TEMPLATE(T) template sophonSum<T>;
 
 template <typename T>
 class SophonReductionFunction {
@@ -263,22 +263,23 @@ class SophonReductionFunction {
   DeviceFunction* deviceFn_;
   HostFunction* hostFn_;
 
-  friend class SophonDevicePointer<T>;
+  // friend class SophonDevicePointer<T>;
 };
 
 template <typename T>
-const SophonReductionFunction<T>* SophonReductionFunction::sum =
+const SophonReductionFunction<T>* SophonReductionFunction<T>::sum =
     new SophonReductionFunction<T>(SUM, &::gloo::sophonSum<T>, &::gloo::sum<T>);
 
 template <typename T>
-const SophonReductionFunction<T>* SophonReductionFunction::product =
+const SophonReductionFunction<T>* SophonReductionFunction<T>::product =
     new SophonReductionFunction<T>(PRODUCT, &::gloo::sophonProduct<T>,
                                    &::gloo::product<T>);
+template <typename T>
+const SophonReductionFunction<T>* SophonReductionFunction<T>::min =
+    new SophonReductionFunction<T>(MIN, &::gloo::sophonMin<T>, &::gloo::min<T>);
 
-const SophonReductionFunction<T>* SophonReductionFunction::min =
-    new SophonReductionFunction<T>(Min, &::gloo::sophonMin<T>, &::gloo::min<T>);
-
-const SophonReductionFunction<T>* SophonReductionFunction::max =
+template <typename T>
+const SophonReductionFunction<T>* SophonReductionFunction<T>::max =
     new SophonReductionFunction<T>(MAX, &::gloo::sophonMax<T>, &::gloo::max<T>);
 
 }  // namespace gloo

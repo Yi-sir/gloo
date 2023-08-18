@@ -3,10 +3,9 @@
 #include "gloo/rendezvous/context.h"
 #include "gloo/rendezvous/file_store.h"
 #include "gloo/rendezvous/redis_store.h"
-#include "gloo/sophgo_allreduce_ring.h"
+#include "gloo/sophon_allreduce_ring.h"
 #include "gloo/sophon.h"
 #include "gloo/transport/tcp/device.h"
-
 
 int sophonNumDevices() {
   int n = 0;
@@ -39,13 +38,31 @@ int main(int argc, char* argv[]) {
   context->connectFullMesh(store, device);
 
   // 申请设备内存，构造gloo::SophonAllreduceRing
-  SophonDeviceMem dev(0); // device id
+  gloo::SophonDeviceMem dev(0);  // device id
+  int count = 4;
+
   dev.requestHandle();
-  dev.allocMem(4, SophonMemType::INT);
-
-
-  int input[4] = {0,1,2,3};
+  dev.allocMem(count, gloo::SophonMemType::INT);
+  int* input = new int[count];
+  std::iota(input, input + 4, 0);
   dev.updateMem(input);
+  std::vector<gloo::SophonDeviceMem> mems;
+  mems.push_back(dev);
 
-  auto algorithm = std::unique_ptr<gloo::Algorithm>(new gloo::SophonAllreducRing<int>(context, ))
+  std::vector<gloo::SophonStream> streams;
+  streams.push_back(gloo::SophonStream(0, dev.handle_));
+
+  auto algorithm = std::unique_ptr<gloo::Algorithm>(
+      new gloo::SophonAllreduceRing<int>(context, mems, count, streams));
+  algorithm->run();
+
+  int* output = new int [count];
+  dev.updateHost((void*)output);
+
+  for(int i = 0; i < count; ++i) {
+    std::cout << output[i] << " ";
+  }
+  std::cout << std::endl;
+
+  return 0;
 }

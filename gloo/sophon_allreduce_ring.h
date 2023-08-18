@@ -21,7 +21,7 @@ class SophonAllreduceRing : public Algorithm {
   // std::vector<SophonDevicePointer<T>> devicePtrs_;
   // SophonDevicePointer<T> scratch_;
   std::vector<SophonDeviceMem> deviceMems_;
-  std::vector<SophonStream> streams_
+  std::vector<SophonStream> streams_;
   SophonDeviceMem deviceScratch_;
   SophonStream* scratchStream_;
   T* hostScratch_;

@@ -62,6 +62,16 @@ if(USE_CUDA)
     )
 endif()
 
+if(USE_SOPHGO)
+  file(GLOB GLOO_SOPHGO_SRCS
+    "${CMAKE_CURRENT_SOURCE_DIR}/sophon*.cc"
+    "${CMAKE_CURRENT_SOURCE_DIR}/sophon*.cu"
+  )
+  file(GLOB GLOO_SOPHGO_HDRS
+    "${CMAKE_CURRENT_SOURCE_DIR}/sophon*.h"
+    )
+endif()
+
 if(USE_ROCM)
   file(GLOB GLOO_HIP_SRCS
     "${HIPIFY_OUTPUT_DIR}/hip*.cc"
@@ -101,11 +111,11 @@ else()
   set(GLOO_HAVE_TRANSPORT_UV 0)
 endif()
 
-if(USE_SOPHGO)
-  set(GLOO_HAVE_TRANSPORT_SOPHGO 1)
-else()
-  set(GLOO_HAVE_TRANSPORT_SOPHGO 0)
-endif()
+# if(USE_SOPHGO)
+#   set(GLOO_HAVE_TRANSPORT_SOPHGO 1)
+# else()
+#   set(GLOO_HAVE_TRANSPORT_SOPHGO 0)
+# endif()
 
 add_subdirectory(common)
 add_subdirectory(mpi)
@@ -117,7 +127,8 @@ if(USE_ROCM AND USE_RCCL)
 endif()
 add_subdirectory(rendezvous)
 add_subdirectory(transport)
-add_subdirectory(sophgo)
+# add_subdirectory(sophgo)
+
 # transport里拿到GLOO_SRCS和GLOO_HDRS列表
 
 # Depend on pthreads for transport device threads
@@ -144,7 +155,7 @@ set(GLOO_USE_IBVERBS ${USE_IBVERBS})
 set(GLOO_USE_MPI ${USE_MPI})
 set(GLOO_USE_AVX ${USE_AVX})
 set(GLOO_USE_LIBUV ${USE_LIBUV})
-set(GLOO_USE_SOPHGO ${USE_SOPHGO})
+# set(GLOO_USE_SOPHGO ${USE_SOPHGO})
 configure_file(config.h.in config.h)
 
 add_library(gloo ${GLOO_STATIC_OR_SHARED} ${GLOO_SRCS})
@@ -168,6 +179,12 @@ if(USE_CUDA)
   endif()
   target_link_libraries(gloo_cuda gloo ${gloo_cuda_DEPENDENCY_LIBS})
 endif()
+
+if(USE_SOPHGO)
+  add_library(gloo_sophgo ${GLOO_STATIC_OR_SHARED} ${GLOO_SOPHGO_SRCS})
+  target_link_libraries(gloo_sophgo gloo)
+endif()
+
 if(USE_ROCM)
   gloo_hip_add_library(gloo_hip ${GLOO_HIP_SRCS})
   target_link_libraries(gloo_hip gloo)
@@ -220,6 +237,13 @@ if(GLOO_INSTALL)
   endforeach()
   if(USE_CUDA)
     foreach(HEADER ${GLOO_CUDA_HDRS})
+      string(REGEX MATCH "(.*)[/\\]" DIR ${HEADER})
+      string(REGEX REPLACE "${CMAKE_CURRENT_SOURCE_DIR}" "gloo" DIR ${DIR})
+      install(FILES ${HEADER} DESTINATION ${CMAKE_INSTALL_PREFIX}/include/${DIR})
+    endforeach()
+  endif()
+  if(USE_SOPHGO)
+    foreach(HEADER ${GLOO_SOPHGO_HDRS})
       string(REGEX MATCH "(.*)[/\\]" DIR ${HEADER})
       string(REGEX REPLACE "${CMAKE_CURRENT_SOURCE_DIR}" "gloo" DIR ${DIR})
       install(FILES ${HEADER} DESTINATION ${CMAKE_INSTALL_PREFIX}/include/${DIR})
