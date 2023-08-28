@@ -4,7 +4,7 @@ These tips apply to Linux.
 
 ### NUMA locality
 
-The process calling into Gloo algorithms should ideally be pinned to a
+The process calling into Sophon algorithms should ideally be pinned to a
 single NUMA node. If it isn't, the scheduler can decide to move back
 and forth between nodes, which typically hurts performance.
 
@@ -44,7 +44,7 @@ tcp-segmentation-offload: on
 #### Disable ER (Early Retransmit) and TLP (Tail Loss Probe)
 
 Uses valuable kernel cycles and not needed in network environments
-where Gloo is typically used (low latency, packet drop extremely
+where Sophon is typically used (low latency, packet drop extremely
 rare). ER and TLP are configured using the same sysctl and both can be
 disabled.
 

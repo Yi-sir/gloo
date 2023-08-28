@@ -1,12 +1,12 @@
-# Known NVIDIA GPU achitectures Gloo can be compiled for.
+# Known NVIDIA GPU achitectures Sophon can be compiled for.
 # This list will be used for CUDA_ARCH_NAME = All option
-set(gloo_known_gpu_archs "")
+set(sophon_known_gpu_archs "")
 
 ################################################################################
 # Function for selecting GPU arch flags for nvcc based on CUDA_ARCH_NAME
 # Usage:
-#   gloo_select_nvcc_arch_flags(out_variable)
-function(gloo_select_nvcc_arch_flags out_variable)
+#   sophon_select_nvcc_arch_flags(out_variable)
+function(sophon_select_nvcc_arch_flags out_variable)
   # List of arch names
   set(__archs_names "Kepler" "Maxwell" "Pascal" "Volta" "All")
   set(__archs_name_default "All")
@@ -31,7 +31,7 @@ function(gloo_select_nvcc_arch_flags out_variable)
   elseif(${CUDA_ARCH_NAME} STREQUAL "Volta")
     set(__cuda_arch_bin "70")
   elseif(${CUDA_ARCH_NAME} STREQUAL "All")
-    set(__cuda_arch_bin ${gloo_known_gpu_archs})
+    set(__cuda_arch_bin ${sophon_known_gpu_archs})
   else()
     message(FATAL_ERROR "Invalid CUDA_ARCH_NAME")
   endif()
@@ -74,8 +74,8 @@ endfunction()
 ################################################################################
 # Function to append to list if specified sequence does not yet exist in list.
 # Usage:
-#   gloo_list_append_if_unique(list_variable arg1 arg2 ...)
-function(gloo_list_append_if_unique list)
+#   sophon_list_append_if_unique(list_variable arg1 arg2 ...)
+function(sophon_list_append_if_unique list)
   list(LENGTH ARGN __match_length)
   set(__match_index 0)
   set(__match OFF)
@@ -105,35 +105,35 @@ endfunction()
 ###  Non macro section
 ################################################################################
 
-if(GLOO_USE_CUDA_TOOLKIT)
+if(SOPHON_USE_CUDA_TOOLKIT)
   find_package(CUDAToolkit 7.0 REQUIRED)
-  set(GLOO_CUDA_VERSION ${CUDAToolkit_VERSION})
+  set(SOPHON_CUDA_VERSION ${CUDAToolkit_VERSION})
 
   # Convert -O2 -Xcompiler="-O2 -Wall" to "-O2;-Xcompiler=-O2,-Wall"
-  separate_arguments(GLOO_NVCC_FLAGS UNIX_COMMAND "${CMAKE_CUDA_FLAGS}")
-  string(REPLACE " " "," GLOO_NVCC_FLAGS "${GLOO_NVCC_FLAGS}")
+  separate_arguments(SOPHON_NVCC_FLAGS UNIX_COMMAND "${CMAKE_CUDA_FLAGS}")
+  string(REPLACE " " "," SOPHON_NVCC_FLAGS "${SOPHON_NVCC_FLAGS}")
 
   if(CUDA_USE_STATIC_CUDA_RUNTIME)
-    set(GLOO_CUDA_LIBRARIES CUDA::cudart_static)
+    set(SOPHON_CUDA_LIBRARIES CUDA::cudart_static)
   else()
-    set(GLOO_CUDA_LIBRARIES CUDA::cudart)
+    set(SOPHON_CUDA_LIBRARIES CUDA::cudart)
   endif()
 else()
   find_package(CUDA 7.0)
   if(NOT CUDA_FOUND)
     return()
   endif()
-  set(GLOO_CUDA_VERSION ${CUDA_VERSION})
-  set(GLOO_NVCC_FLAGS "${CUDA_NVCC_FLAGS}")
+  set(SOPHON_CUDA_VERSION ${CUDA_VERSION})
+  set(SOPHON_NVCC_FLAGS "${CUDA_NVCC_FLAGS}")
 
   include_directories(SYSTEM ${CUDA_INCLUDE_DIRS})
-  set(GLOO_CUDA_LIBRARIES ${CUDA_CUDART_LIBRARY})
+  set(SOPHON_CUDA_LIBRARIES ${CUDA_CUDART_LIBRARY})
 
   # If the project including us doesn't set any -std=xxx directly, we set it to C++11 here.
   set(CUDA_PROPAGATE_HOST_FLAGS OFF)
-  if((NOT "${GLOO_NVCC_FLAGS}" MATCHES "-std=c\\+\\+") AND (NOT "${GLOO_NVCC_FLAGS}" MATCHES "-std=gnu\\+\\+"))
+  if((NOT "${SOPHON_NVCC_FLAGS}" MATCHES "-std=c\\+\\+") AND (NOT "${SOPHON_NVCC_FLAGS}" MATCHES "-std=gnu\\+\\+"))
     if(NOT MSVC)
-      gloo_list_append_if_unique(GLOO_NVCC_FLAGS "-std=c++11")
+      sophon_list_append_if_unique(SOPHON_NVCC_FLAGS "-std=c++11")
     endif()
   endif()
 
@@ -142,48 +142,48 @@ else()
 endif()
 
 set(HAVE_CUDA TRUE)
-message(STATUS "CUDA detected: " ${GLOO_CUDA_VERSION})
-if (${GLOO_CUDA_VERSION} LESS 9.0)
-  list(APPEND GLOO_NVCC_FLAGS "-D_MWAITXINTRIN_H_INCLUDED")
-  list(APPEND GLOO_NVCC_FLAGS "-D__STRICT_ANSI__")
+message(STATUS "CUDA detected: " ${SOPHON_CUDA_VERSION})
+if (${SOPHON_CUDA_VERSION} LESS 9.0)
+  list(APPEND SOPHON_NVCC_FLAGS "-D_MWAITXINTRIN_H_INCLUDED")
+  list(APPEND SOPHON_NVCC_FLAGS "-D__STRICT_ANSI__")
 else()
   # nvcc may complain that sm_xx is no longer supported. Suppress the warning for now.
-  list(APPEND GLOO_NVCC_FLAGS "-Wno-deprecated-gpu-targets")
+  list(APPEND SOPHON_NVCC_FLAGS "-Wno-deprecated-gpu-targets")
 endif()
 
-if(GLOO_CUDA_VERSION VERSION_LESS 8.0)
-  set(gloo_known_gpu_archs "30 35 50 52")
-elseif(GLOO_CUDA_VERSION VERSION_LESS 9.0)
-  set(gloo_known_gpu_archs "30 35 50 52 60 61")
-elseif(GLOO_CUDA_VERSION VERSION_LESS 10.0)
-  set(gloo_known_gpu_archs "30 35 50 52 60 61 70")
-elseif(GLOO_CUDA_VERSION VERSION_LESS 11.0)
-  set(gloo_known_gpu_archs "35 50 52 60 61 70 75")
-elseif(GLOO_CUDA_VERSION VERSION_LESS 12.0)
-  set(gloo_known_gpu_archs "35 50 52 60 61 70 75 80 86")
+if(SOPHON_CUDA_VERSION VERSION_LESS 8.0)
+  set(sophon_known_gpu_archs "30 35 50 52")
+elseif(SOPHON_CUDA_VERSION VERSION_LESS 9.0)
+  set(sophon_known_gpu_archs "30 35 50 52 60 61")
+elseif(SOPHON_CUDA_VERSION VERSION_LESS 10.0)
+  set(sophon_known_gpu_archs "30 35 50 52 60 61 70")
+elseif(SOPHON_CUDA_VERSION VERSION_LESS 11.0)
+  set(sophon_known_gpu_archs "35 50 52 60 61 70 75")
+elseif(SOPHON_CUDA_VERSION VERSION_LESS 12.0)
+  set(sophon_known_gpu_archs "35 50 52 60 61 70 75 80 86")
 endif()
 
-list(APPEND gloo_cuda_DEPENDENCY_LIBS ${GLOO_CUDA_LIBRARIES})
+list(APPEND sophon_cuda_DEPENDENCY_LIBS ${SOPHON_CUDA_LIBRARIES})
 
 # Setting nvcc arch flags (or inherit if already set)
-if (NOT ";${GLOO_NVCC_FLAGS};" MATCHES ";-gencode;")
-  gloo_select_nvcc_arch_flags(NVCC_FLAGS_EXTRA)
-  list(APPEND GLOO_NVCC_FLAGS ${NVCC_FLAGS_EXTRA})
+if (NOT ";${SOPHON_NVCC_FLAGS};" MATCHES ";-gencode;")
+  sophon_select_nvcc_arch_flags(NVCC_FLAGS_EXTRA)
+  list(APPEND SOPHON_NVCC_FLAGS ${NVCC_FLAGS_EXTRA})
   message(STATUS "Added CUDA NVCC flags for: ${NVCC_FLAGS_EXTRA_readable}")
 endif()
 
 # Disable some nvcc diagnostic that apears in boost, glog, glags, opencv, etc.
 foreach(diag cc_clobber_ignored integer_sign_change useless_using_declaration set_but_not_used)
-  gloo_list_append_if_unique(GLOO_NVCC_FLAGS -Xcudafe --diag_suppress=${diag})
+  sophon_list_append_if_unique(SOPHON_NVCC_FLAGS -Xcudafe --diag_suppress=${diag})
 endforeach()
 
 if(NOT MSVC)
-  gloo_list_append_if_unique(GLOO_NVCC_FLAGS "-Xcompiler" "-fPIC")
+  sophon_list_append_if_unique(SOPHON_NVCC_FLAGS "-Xcompiler" "-fPIC")
 endif()
 
-if(GLOO_USE_CUDA_TOOLKIT)
+if(SOPHON_USE_CUDA_TOOLKIT)
   # Convert list to space-separated string
-  string(REPLACE ";" " " CMAKE_CUDA_FLAGS "${GLOO_NVCC_FLAGS}")
+  string(REPLACE ";" " " CMAKE_CUDA_FLAGS "${SOPHON_NVCC_FLAGS}")
 else()
-  set(CUDA_NVCC_FLAGS "${GLOO_NVCC_FLAGS}")
+  set(CUDA_NVCC_FLAGS "${SOPHON_NVCC_FLAGS}")
 endif()

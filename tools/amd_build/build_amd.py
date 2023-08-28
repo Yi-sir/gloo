@@ -42,8 +42,8 @@ parser.add_argument(
 parser.add_argument(
     "--root-dir",
     type=str,
-    default="gloo",
-    help="The root directory of gloo project",
+    default="sophon",
+    help="The root directory of sophon project",
     required=False,
 )
 

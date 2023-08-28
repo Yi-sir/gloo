@@ -1,6 +1,6 @@
-# SOPHON_GLOO
+# SOPHON_SOPHON
 
-本仓库为添加了用于在SOPHON设备上进行通信的后端代码的GLOO库
+本仓库为添加了用于在SOPHON设备上进行通信的后端代码的SOPHON库
 
 ## Date 2023.8.18
 删除`example_sophgo`例程及相关代码，参考cuda增加`sophon.h`, `sophon_allreduce_ring.h`, `sophon_collectives_host.h`等文件，增加`test_sophgo`例程，申请设备内存并进行通信，支持多机通信(多机通信依赖redis，需要参考文末配置redis服务)。

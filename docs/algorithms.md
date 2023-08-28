@@ -1,6 +1,6 @@
 # Algorithms
 
-Index of algorithms provided by Gloo and their semantics.
+Index of algorithms provided by Sophon and their semantics.
 
 Variables used:
 * **P**: Number of processes/machines

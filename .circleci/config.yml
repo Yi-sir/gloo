@@ -77,7 +77,7 @@ jobs:
       - run:
           name: Test
           command: |
-            build/gloo/test/Debug/gloo_test.exe
+            build/sophon/test/Debug/sophon_test.exe
   build:
     parameters:
       docker_image:
@@ -176,7 +176,7 @@ jobs:
               EXCLUDE="*MemoryTest.ManySlotsNoLeaks*:$EXCLUDE"
             fi
 
-            build/gloo/test/gloo_test --gtest_filter="-$EXCLUDE"
+            build/sophon/test/sophon_test --gtest_filter="-$EXCLUDE"
 
 workflows:
   build:
@@ -257,7 +257,7 @@ workflows:
           apt_get: "gcc-9 g++-9"
           docker_image: nvidia/cuda:11.7.1-devel-ubuntu22.04
           cmake_compiler: -DCMAKE_C_COMPILER=gcc-9 -DCMAKE_CXX_COMPILER=g++-9 -DCMAKE_CUDA_HOST_COMPILER=g++-9
-          cmake_args: -DUSE_IBVERBS=ON -DUSE_LIBUV=ON -DUSE_TCP_OPENSSL_LINK=ON -DUSE_CUDA=ON -DGLOO_USE_CUDA_TOOLKIT=ON -DOPENSSL_ROOT_DIR=/opt/openssl/
+          cmake_args: -DUSE_IBVERBS=ON -DUSE_LIBUV=ON -DUSE_TCP_OPENSSL_LINK=ON -DUSE_CUDA=ON -DSOPHON_USE_CUDA_TOOLKIT=ON -DOPENSSL_ROOT_DIR=/opt/openssl/
           build_openssl: true
       - build:
           name: tsan-all-transports

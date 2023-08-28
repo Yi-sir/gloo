@@ -1,16 +1,16 @@
 cmake_minimum_required(VERSION 2.8.12 FATAL_ERROR)
 
-project(gloo CXX C)
+project(sophon CXX C)
 
-set(GLOO_VERSION_MAJOR 0)
-set(GLOO_VERSION_MINOR 5)
-set(GLOO_VERSION_PATCH 0)
-set(GLOO_VERSION
-    "${GLOO_VERSION_MAJOR}.${GLOO_VERSION_MINOR}.${GLOO_VERSION_PATCH}")
+set(SOPHON_VERSION_MAJOR 0)
+set(SOPHON_VERSION_MINOR 5)
+set(SOPHON_VERSION_PATCH 0)
+set(SOPHON_VERSION
+    "${SOPHON_VERSION_MAJOR}.${SOPHON_VERSION_MINOR}.${SOPHON_VERSION_PATCH}")
 
-# Gloo assumes 64-bit and doesn't run builds/tests for anything else.
+# Sophon assumes 64-bit and doesn't run builds/tests for anything else.
 if(NOT CMAKE_SIZEOF_VOID_P EQUAL 8)
-  message(FATAL_ERROR "Gloo can only be built on 64-bit systems.")
+  message(FATAL_ERROR "Sophon can only be built on 64-bit systems.")
 endif()
 
 # Local CMake modules
@@ -41,8 +41,8 @@ option(USE_TCP_OPENSSL_LOAD "Build TCP-TLS transport with OpenSSL dynamically lo
 if(${USE_TCP_OPENSSL_LINK} AND ${USE_TCP_OPENSSL_LOAD})
   message(FATAL_ERROR "USE_TCP_OPENSSL_LINK and USE_TCP_OPENSSL_LOAD are mutually exclusive")
 endif()
-option(USE_CUDA "Build with CUDA support" OFF)
-option(GLOO_USE_CUDA_TOOLKIT "Build CUDA with FindCUDATookit.cmake and enable_language(CUDA)" OFF)
+# option(USE_CUDA "Build with CUDA support" OFF)
+# option(SOPHON_USE_CUDA_TOOLKIT "Build CUDA with FindCUDATookit.cmake and enable_language(CUDA)" OFF)
 option(USE_SOPHGO "Support SOPHGO Hardware" ${USE_SOPHGO_DEFAULT})
 
 if(MSVC)
@@ -96,18 +96,18 @@ if(SANITIZE)
 endif()
 
 # Add install targets by default (override from parent project)
-set(GLOO_INSTALL ON CACHE BOOL "")
-mark_as_advanced(GLOO_INSTALL)
+set(SOPHON_INSTALL ON CACHE BOOL "")
+mark_as_advanced(SOPHON_INSTALL)
 
 # Build shared or static libraries (override from parent project)
 if(BUILD_SHARED_LIBS)
-  set(GLOO_STATIC_OR_SHARED SHARED CACHE STRING "")
-  message(STATUS "Gloo build as SHARED library")
+  set(SOPHON_STATIC_OR_SHARED SHARED CACHE STRING "")
+  message(STATUS "Sophon build as SHARED library")
 else()
-  set(GLOO_STATIC_OR_SHARED STATIC CACHE STRING "")
-  message(STATUS "Gloo build as STATIC library")
+  set(SOPHON_STATIC_OR_SHARED STATIC CACHE STRING "")
+  message(STATUS "Sophon build as STATIC library")
 endif()
-mark_as_advanced(GLOO_STATIC_OR_SHARED)
+mark_as_advanced(SOPHON_STATIC_OR_SHARED)
 
 # Process dependencies
 include(cmake/Dependencies.cmake)
@@ -123,27 +123,27 @@ if(NOT MSVC)
 endif()
 
 # Recurse into main project directory
-add_subdirectory(gloo)
+add_subdirectory(sophon)
 
 # Finally, create the cmake configuration files.
 configure_file(
-  ${PROJECT_SOURCE_DIR}/cmake/GlooConfigVersion.cmake.in
-  ${PROJECT_BINARY_DIR}/cmake/GlooConfigVersion.cmake
+  ${PROJECT_SOURCE_DIR}/cmake/SophonConfigVersion.cmake.in
+  ${PROJECT_BINARY_DIR}/cmake/SophonConfigVersion.cmake
   @ONLY)
 configure_file(
-  ${PROJECT_SOURCE_DIR}/cmake/GlooConfig.cmake.in
-  ${PROJECT_BINARY_DIR}/cmake/GlooConfig.cmake
+  ${PROJECT_SOURCE_DIR}/cmake/SophonConfig.cmake.in
+  ${PROJECT_BINARY_DIR}/cmake/SophonConfig.cmake
   @ONLY)
 
-if(GLOO_INSTALL)
+if(SOPHON_INSTALL)
   if(NOT MSVC)
     install(FILES
-      ${PROJECT_BINARY_DIR}/cmake/GlooConfig.cmake
-      ${PROJECT_BINARY_DIR}/cmake/GlooConfigVersion.cmake
-      DESTINATION share/cmake/Gloo
+      ${PROJECT_BINARY_DIR}/cmake/SophonConfig.cmake
+      ${PROJECT_BINARY_DIR}/cmake/SophonConfigVersion.cmake
+      DESTINATION share/cmake/Sophon
       COMPONENT dev)
-    install(EXPORT GlooTargets DESTINATION share/cmake/Gloo
-      FILE GlooTargets.cmake
+    install(EXPORT SophonTargets DESTINATION share/cmake/Sophon
+      FILE SophonTargets.cmake
       COMPONENT dev)
   else()
     install(FILES ${libuv_DLL_PATH} DESTINATION lib)

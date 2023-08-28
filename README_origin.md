@@ -1,8 +1,8 @@
-# Gloo
+# Sophon
 
-[![Support Ukraine](https://img.shields.io/badge/Support-Ukraine-FFD500?style=flat&labelColor=005BBB)](https://opensource.fb.com/support-ukraine) [![CircleCI](https://circleci.com/gh/facebookincubator/gloo/tree/master.svg?style=svg)](https://circleci.com/gh/facebookincubator/gloo/tree/master)
+[![Support Ukraine](https://img.shields.io/badge/Support-Ukraine-FFD500?style=flat&labelColor=005BBB)](https://opensource.fb.com/support-ukraine) [![CircleCI](https://circleci.com/gh/facebookincubator/sophon/tree/master.svg?style=svg)](https://circleci.com/gh/facebookincubator/sophon/tree/master)
 
-Gloo is a collective communications library. It comes with a number of
+Sophon is a collective communications library. It comes with a number of
 collective algorithms useful for machine learning applications. These
 include a barrier, broadcast, and allreduce.
 
@@ -20,7 +20,7 @@ host and device; this is taken care of by the algorithm implementations.
 
 ## Requirements
 
-Gloo is built to run on Linux and has no hard dependencies other than libstdc++.
+Sophon is built to run on Linux and has no hard dependencies other than libstdc++.
 That said, it will generally only be useful when used in combination with a few
 optional dependencies below.
 
@@ -42,7 +42,7 @@ Please refer to [docs/](docs/) for detailed documentation.
 
 ## Building
 
-You can build Gloo using CMake.
+You can build Sophon using CMake.
 
 Since it is a library, it is most convenient to vendor it in your own
 project and include the project root in your own CMake configuration.
@@ -68,11 +68,11 @@ mkdir -p build
 cd build
 cmake ../ -DBUILD_TEST=1 -DGTEST_ROOT=/some/path (if using custom install)
 make
-ls -l gloo/test/gloo_test*
+ls -l sophon/test/sophon_test*
 ```
 
 To test the CUDA algorithms, specify `USE_CUDA=ON` as well, and the
-CUDA tests are built at `gloo/test/gloo_test_cuda`.
+CUDA tests are built at `sophon/test/sophon_test_cuda`.
 
 ### Benchmark
 
@@ -91,7 +91,7 @@ mkdir build
 cd build
 cmake ../ -DBUILD_BENCHMARK=1
 make
-ls -l gloo/benchmark/benchmark
+ls -l sophon/benchmark/benchmark
 ```
 
 ## Benchmarking
@@ -154,4 +154,4 @@ Example output (running on 4 machines with a 40GbE network):
 
 ## License
 
-Gloo is BSD-licensed.
+Sophon is BSD-licensed.

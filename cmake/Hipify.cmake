@@ -39,4 +39,4 @@ if (NOT hipify_return_value EQUAL 0)
 endif()
 
 include_directories(PREPEND ${HIPIFY_OUTPUT_ROOT_DIR})
-set(HIPIFY_OUTPUT_DIR ${HIPIFY_OUTPUT_ROOT_DIR}/gloo)
+set(HIPIFY_OUTPUT_DIR ${HIPIFY_OUTPUT_ROOT_DIR}/sophon)

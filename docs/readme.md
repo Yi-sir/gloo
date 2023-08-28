@@ -1,4 +1,4 @@
-# Gloo documentation
+# Sophon documentation
 
 Documentation is split by domain. This file contains a general
 overview of these domains and how they interact.
@@ -7,7 +7,7 @@ overview of these domains and how they interact.
 
 * [Overview](readme.md) -- this file
 
-* [Rendezvous](rendezvous.md) -- creating a `gloo::Context`
+* [Rendezvous](rendezvous.md) -- creating a `sophon::Context`
   
 * [Algorithms](algorithms.md) -- index of collective algorithms
   and their semantics and complexity
@@ -15,7 +15,7 @@ overview of these domains and how they interact.
 * [Transport details](transport.md) -- the transport API and its
   implementations
 
-* [CUDA integration](cuda.md) -- integration of CUDA aware Gloo
+* [CUDA integration](cuda.md) -- integration of CUDA aware Sophon
   algorithms with existing CUDA code
 
 * [Latency optimization](latency.md) -- number of tips and tricks to
@@ -23,11 +23,11 @@ overview of these domains and how they interact.
 
 ## Overview
 
-Gloo algorithms are collective algorithms, meaning they can run in
+Sophon algorithms are collective algorithms, meaning they can run in
 parallel across two or more processes/machines. To be able to execute
 across multiple machines, they first need to find each other. We call
 this _rendezvous_ and it is the first thing to address when
-integrating Gloo into your code base.
+integrating Sophon into your code base.
 See [`rendezvous.md`](./rendezvous.md) for more information.
 
 Once rendezvous completes, participating machines have setup
@@ -41,7 +41,7 @@ Every participating process knows about the number of participating
 processes, and its _rank_ (or 0-based index) within the list of
 participating processes. This state, as well as the state needed to
 store the persistent communication channels, is stored in a
-`gloo::Context` class. Gloo does not maintain global state or
+`sophon::Context` class. Sophon does not maintain global state or
 thread-local state. This means that you can setup as many contexts as
 needed, and introduce as much parallelism as needed by your
 application.

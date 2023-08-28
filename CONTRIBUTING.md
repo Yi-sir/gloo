@@ -1,4 +1,4 @@
-# Contributing to Gloo
+# Contributing to Sophon
 We want to make contributing to this project as easy and transparent as
 possible.
 
@@ -32,5 +32,5 @@ outlined on that page and do not file a public issue.
 * camelCase instead of snake_case
 
 ## License
-By contributing to Gloo, you agree that your contributions will be licensed
+By contributing to Sophon, you agree that your contributions will be licensed
 under the LICENSE file in the root directory of this source tree.

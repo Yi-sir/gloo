@@ -94,10 +94,10 @@ ELSE()
   SET(MIOPEN_PATH $ENV{MIOPEN_PATH})
 ENDIF()
 
-IF(NOT DEFINED ENV{GLOO_ROCM_ARCH})
-  SET(GLOO_ROCM_ARCH gfx900;gfx906)
+IF(NOT DEFINED ENV{SOPHON_ROCM_ARCH})
+  SET(SOPHON_ROCM_ARCH gfx900;gfx906)
 ELSE()
-  SET(GLOO_ROCM_ARCH $ENV{GLOO_ROCM_ARCH})
+  SET(SOPHON_ROCM_ARCH $ENV{SOPHON_ROCM_ARCH})
 ENDIF()
 
 # Add HIP to the CMAKE Module Path
@@ -121,28 +121,28 @@ IF(HIP_FOUND)
 
   set(CMAKE_HCC_FLAGS_DEBUG ${CMAKE_CXX_FLAGS_DEBUG})
   set(CMAKE_HCC_FLAGS_RELEASE ${CMAKE_CXX_FLAGS_RELEASE})
-  FIND_LIBRARY(GLOO_HIP_HCC_LIBRARIES ${hip_library_name} HINTS ${HIP_PATH}/lib)
-  # Necessary includes for building Gloo since we include HIP headers that depend on hcc/hsa headers.
+  FIND_LIBRARY(SOPHON_HIP_HCC_LIBRARIES ${hip_library_name} HINTS ${HIP_PATH}/lib)
+  # Necessary includes for building Sophon since we include HIP headers that depend on hcc/hsa headers.
   set(hcc_INCLUDE_DIRS ${HCC_PATH}/include)
   set(hsa_INCLUDE_DIRS ${HSA_PATH}/include)
 
 ENDIF()
 
 ################################################################################
-function(gloo_hip_add_library target)
+function(sophon_hip_add_library target)
   set(sources ${ARGN})
   set_source_files_properties(${sources} PROPERTIES HIP_SOURCE_PROPERTY_FORMAT 1)
-  hip_add_library(${target} ${sources} ${GLOO_STATIC_OR_SHARED})
-  target_include_directories(${target} PUBLIC ${GLOO_HIP_INCLUDE})
+  hip_add_library(${target} ${sources} ${SOPHON_STATIC_OR_SHARED})
+  target_include_directories(${target} PUBLIC ${SOPHON_HIP_INCLUDE})
   target_compile_options(${target} PUBLIC ${HIP_CXX_FLAGS})
-  target_link_libraries(${target} ${gloo_hip_DEPENDENCY_LIBS})
+  target_link_libraries(${target} ${sophon_hip_DEPENDENCY_LIBS})
 endfunction()
 
-function(gloo_hip_add_executable target)
+function(sophon_hip_add_executable target)
   set(sources ${ARGN})
   set_source_files_properties(${sources} PROPERTIES HIP_SOURCE_PROPERTY_FORMAT 1)
   hip_add_executable(${target} ${sources})
-  target_include_directories(${target} PUBLIC ${GLOO_HIP_INCLUDE})
+  target_include_directories(${target} PUBLIC ${SOPHON_HIP_INCLUDE})
   target_compile_options(${target} PUBLIC ${HIP_CXX_FLAGS})
-  target_link_libraries(${target} ${gloo_hip_DEPENDENCY_LIBS})
+  target_link_libraries(${target} ${sophon_hip_DEPENDENCY_LIBS})
 endfunction()
