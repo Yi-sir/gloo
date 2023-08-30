@@ -2,6 +2,9 @@
 
 本仓库为添加了用于在SOPHON设备上进行通信的后端代码的SOPHON库
 
+## Date 2023.8.30
+删除了无用目录，当前目录可以直接在tpu-train/collective_extension/third_party目录下编译，并使用setup2260.py编译2260通信库
+
 ## Date 2023.8.28
 所有gloo命名改为sophon，删除`sophon`、`cuda`相关代码，准备增加2260相关算子
 
