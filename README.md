@@ -2,6 +2,14 @@
 
 本仓库为添加了用于在SOPHON设备上进行通信的后端代码的SOPHON库
 
+## Date 2023.8.30
+修改了编译选项等多处内容，目前该仓库可以直接在`tpu-train/collective_extension/third_party`目录下进行编译，并构造2260后端，测试代码可以通过。
+编译命令：
+```bash
+cmake .. -DCMAKE_BUILD_TYPE=Debug -DUSE_SOPHGO=1
+make -j4
+```
+
 ## Date 2023.8.28
 所有gloo命名改为sophon，删除`sophon`、`cuda`相关代码，准备增加2260相关算子
 
