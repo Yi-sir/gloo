@@ -54,13 +54,9 @@ class ScatterOptions {
     this->out = context->createUnboundBuffer(ptr, elements * sizeof(T));
   }
 
-  void setRoot(int root) {
-    this->root = root;
-  }
+  void setRoot(int root) { this->root = root; }
 
-  void setTag(uint32_t tag) {
-    this->tag = tag;
-  }
+  void setTag(uint32_t tag) { this->tag = tag; }
 
   void setTimeout(std::chrono::milliseconds timeout) {
     this->timeout = timeout;
@@ -95,4 +91,4 @@ class ScatterOptions {
 
 void scatter(ScatterOptions& opts);
 
-} // namespace sophon
+}  // namespace sophon

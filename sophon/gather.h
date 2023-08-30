@@ -7,7 +7,6 @@
  */
 
 #pragma once
-
 #include "sophon/context.h"
 #include "sophon/transport/unbound_buffer.h"
 
@@ -15,6 +14,10 @@ namespace sophon {
 
 class GatherOptions {
  public:
+  // using SophonGatherFunc =
+  //     std::function<void*(bm_handle_t, bm_device_mem_t, int, sg_data_type_t,
+  //                         bm_device_mem_t, int, sg_data_type_t, int)>;
+
   explicit GatherOptions(const std::shared_ptr<Context>& context)
       : context(context), timeout(context->getTimeout()) {}
 
@@ -42,13 +45,9 @@ class GatherOptions {
     out = context->createUnboundBuffer(ptr, elements * sizeof(T));
   }
 
-  void setRoot(int root) {
-    this->root = root;
-  }
+  void setRoot(int root) { this->root = root; }
 
-  void setTag(uint32_t tag) {
-    this->tag = tag;
-  }
+  void setTag(uint32_t tag) { this->tag = tag; }
 
   void setTimeout(std::chrono::milliseconds timeout) {
     this->timeout = timeout;
@@ -75,6 +74,9 @@ class GatherOptions {
   friend void gather(GatherOptions&);
 };
 
+// void gather(GatherOptions& opts, bm_handle_t, bm_device_mem_t, int, sg_data_type_t, bm_device_mem_t,
+//             int, sg_data_type_t, int);
+
 void gather(GatherOptions& opts);
 
-} // namespace sophon
+}  // namespace sophon

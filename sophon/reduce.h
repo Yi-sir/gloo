@@ -51,17 +51,11 @@ class ReduceOptions {
     this->out = context->createUnboundBuffer(ptr, elements * sizeof(T));
   }
 
-  void setRoot(int root) {
-    this->root = root;
-  }
+  void setRoot(int root) { this->root = root; }
 
-  void setReduceFunction(Func fn) {
-    this->reduce = fn;
-  }
+  void setReduceFunction(Func fn) { this->reduce = fn; }
 
-  void setTag(uint32_t tag) {
-    this->tag = tag;
-  }
+  void setTag(uint32_t tag) { this->tag = tag; }
 
   void setMaxSegmentSize(size_t maxSegmentSize) {
     this->maxSegmentSize = maxSegmentSize;
@@ -111,4 +105,4 @@ class ReduceOptions {
 
 void reduce(ReduceOptions& opts);
 
-} // namespace sophon
+}  // namespace sophon
